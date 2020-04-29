@@ -2,13 +2,14 @@ const cellWidth = 50;
 const spacingBtwCells = 20;
 const spacingBtwCellAndIndex = 20;
 const indexTextSize = 14;
-const spacingForInputs = 50;
 const spacingBtwTopAndInputs = 20;
 const widthOfNumberInput = 30;
 const spacingBtwInputs = 20;
 const horizontalMargin = 16;
 const verticalMargin = 20;
 const customFramerate = 5;
+const heightOfInputs = 30;
+var spacingForInputs = 50;
 var minRangeOfRandom = 0; // Inclusive
 var maxRangeOfRandom = 10; // Inclusive
 var lengthOfArray = 50;
@@ -29,6 +30,14 @@ var arrayOfInputData = [{
     },
     {
         text: "Frames per second: ",
+        type: "number"
+    },
+    {
+        text: "Minimum random value: ",
+        type: "number"
+    },
+    {
+        text: "Maximum random value: ",
         type: "number"
     },
     {
@@ -60,15 +69,13 @@ var arrayOfSearchAlgos = ['Linear Search',
     'Binary Search',
     'Jump Search',
     'Interpolation Search',
-    'Exponential Search',
-    'Ubiquitous Binary Search'
+    'Exponential Search'
 ]
 var arrayOfDescriptions = [];
 var isRunning = true;
-var isPaused = false;
+var isPaused = true;
 
 // the index linsearch is currently on
-var currIndex = 0;
 
 //----------------------------------------------------------------------------Classes--------------------------------------------------------------------------------
 
@@ -202,6 +209,8 @@ function setup() {
 //runs every frame
 function draw() {
     getInput('Array Length: ').inputElement.input(updateCells);
+    minRangeOfRandom = getInput('Minimum random value: ').getValue();
+    maxRangeOfRandom = getInput('Maximum random value: ').getValue();
     framesPerSecond = getInput('Frames per second: ').getValue();
     setFill("white")
 
@@ -216,7 +225,7 @@ function draw() {
     getInput('Randomize').inputElement.mousePressed(randomizeCells);
 
     if (frameCount % (60 / framesPerSecond) == 0) {
-        if (!isPaused) {
+        if (!isPaused && isRunning) {
             switch (getInput("Search Algorithm: ").getValue()) {
                 case "Linear Search":
                     stepLinearSearch();
@@ -225,13 +234,13 @@ function draw() {
                     stepBinarySearch();
                     break;
                 case "Jump Search":
-                    JumpSearch();
+                    stepJumpSearch();
                     break;
                 case "Interpolation Search":
-                    interpolationSearch();
+                    stepInterpolationSearch();
                     break;
                 case "Exopential Search":
-                    exponentialSearch();
+                    stepExponentialSearch();
                     break;
             }
         }
@@ -258,12 +267,18 @@ function createInputs() {
 
 function drawInputs() {
     var cursor = spacingBtwInputs / 2;
-    for (var i = 0; i < arrayOfInputs.length; i++) {
-        setFill("black");
-        arrayOfInputs[i].drawText(cursor, spacingBtwTopAndInputs);
-        arrayOfInputs[i].setPosition(cursor, spacingBtwTopAndInputs);
+    var y = spacingBtwTopAndInputs;
+    setFill("black");
+    for (var i in arrayOfInputs) {
+        if (cursor + arrayOfInputs[i].getWidth() > width) {
+            cursor = spacingBtwInputs / 2;
+            y += heightOfInputs;
+        }
+        arrayOfInputs[i].drawText(cursor, y);
+        arrayOfInputs[i].setPosition(cursor, y);
         cursor += arrayOfInputs[i].getWidth();
     }
+    spacingForInputs = y + heightOfInputs;
 }
 
 function getInput(text) {
@@ -343,44 +358,44 @@ function randomizeCells() {
 
 //---------------------------------------------------------------------------Search Algorithms-----------------------------------------------------------------------------
 
-var linSearchLen, runLinSearch = false;
+var linSearchCurrIndex, linSearchLen, runLinSearch = false;
 
 function initializeLinearSearch(start, len) {
-    currIndex = start;
+    linSearchCurrIndex = start;
     linSearchLen = len;
     runLinSearch = true;
 }
 
 function stepLinearSearch() {
-    if (runLinSearch && currIndex < linSearchLen) {
-        if (currIndex - 1 >= 0) {
-            arrayOfCells[currIndex - 1].setIsBeingSearched(false);
+    if (runLinSearch && linSearchCurrIndex < linSearchLen) {
+        if (linSearchCurrIndex - 1 >= 0) {
+            arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
         }
         // sets the cell to being currently searched
-        arrayOfCells[currIndex].setIsBeingSearched(true);
+        arrayOfCells[linSearchCurrIndex].setIsBeingSearched(true);
         // if the cell contains the number to search, set its found to true
-        if (arrayOfCells[currIndex].getNumber() == getInput("Value to search: ").getValue()) {
-            arrayOfCells[currIndex].setIsSearchValue(true);
-            if (currIndex == linSearchLen - 1 || !getInput("Find Multiple: ").getValue()) {
+        if (arrayOfCells[linSearchCurrIndex].getNumber() == getInput("Value to search: ").getValue()) {
+            arrayOfCells[linSearchCurrIndex].setIsSearchValue(true);
+            if (linSearchCurrIndex == linSearchLen - 1 || !getInput("Find Multiple: ").getValue()) {
                 runLinSearch = false;
-                arrayOfCells[currIndex].setIsBeingSearched(false);
+                arrayOfCells[linSearchCurrIndex].setIsBeingSearched(false);
             }
         }
-        // increment currIndex
-        currIndex++;
+        // increment linSearchCurrIndex
+        linSearchCurrIndex++;
         // make sure it doesn't exceed the array bounds
-        currIndex = constrain(currIndex, 0, linSearchLen);
+        linSearchCurrIndex = constrain(linSearchCurrIndex, 0, linSearchLen);
 
-        if (currIndex == linSearchLen) {
+        if (linSearchCurrIndex == linSearchLen) {
             runLinSearch = false;
         }
-    }
-    else if (currIndex == linSearchLen) {
-        arrayOfCells[currIndex - 1].setIsBeingSearched(false);
+    } else if (linSearchCurrIndex == linSearchLen) {
+        arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
     }
 }
 
-var low, mid, high, runBinarySearch = false, prevLow, prevHigh;
+var low, mid, high, runBinarySearch = false,
+    prevLow, prevHigh;
 
 function initializeBinarySearch(start, len) {
     sortCells();
@@ -419,6 +434,15 @@ function stepBinarySearch() {
     }
 }
 
+var runJumpSearch = false,
+    jumpSearchLen, jumpSearchStep;
+
+function initializeJumpSearch(start, len) {
+    runJumpSearch = true;
+    jumpSearchLen = len;
+
+}
+
 
 //---------------------------------------------------------------------------Other Functions-----------------------------------------------------------------------------
 
@@ -432,6 +456,15 @@ function startSearch() {
             break;
         case "Binary Search":
             initializeBinarySearch(0, lengthOfArray);
+            break;
+        case "Jump Search":
+            initializeJumpSearch(0, lengthOfArray);
+            break;
+        case "Interpolation Search":
+            initializeInterpolationSearch(0, lengthOfArray);
+            break;
+        case "Exponential Search":
+            initializeExponentialSearch(0, lengthOfArray);
             break;
     }
 
