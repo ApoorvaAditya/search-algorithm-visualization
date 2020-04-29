@@ -1,279 +1,420 @@
-// The length of the array
-var arrLen = 50;
-// Array of cells
-var cells;
-//width of a cell
-const w = 50;
-// space between each cell
-const spacing = 20;
-// space between bottom of cell and center of text containing the index
-const indexOffset = 20;
-// size of the text containing index
-const indexSize = 14;
-// space for all the inputs above the array
-const topOffset = 50;
-// top spacing for the inputs
-const inputOffset = 20;
-// width of number input field
-const inputWidth = 30;
+const cellWidth = 50;
+const spacingBtwCells = 20;
+const spacingBtwCellAndIndex = 20;
+const indexTextSize = 14;
+const spacingForInputs = 50;
+const spacingBtwTopAndInputs = 20;
+const widthOfNumberInput = 30;
+const spacingBtwInputs = 20;
+const horizontalMargin = 16;
+const verticalMargin = 20;
+const customFramerate = 5;
+var minRangeOfRandom = 0; // Inclusive
+var maxRangeOfRandom = 10; // Inclusive
+var lengthOfArray = 50;
+var framesPerSecond = 10;
+var arrayOfCells;
+var arrayOfInputs;
+var arrayOfInputData = [{
+        text: "Search Algorithm: ",
+        type: "dropdown"
+    },
+    {
+        text: "Array Length: ",
+        type: "number"
+    },
+    {
+        text: "Value to search: ",
+        type: "number"
+    },
+    {
+        text: "Speed: ",
+        type: "number"
+    },
+    {
+        text: "Start",
+        type: "button"
+    },
+    {
+        text: "Pause",
+        type: "button"
+    },
+    {
+        text: "Randomize",
+        type: "button"
+    },
+    {
+        text: "Sort",
+        type: "button"
+    },
+    {
+        text: "Find Multiple: ",
+        type: "checkbox"
+    },
+    {
+        text: "Unique Values: ",
+        type: "checkbox"
+    }
+];
+var arrayOfSearchAlgos = ['Linear Search',
+    'Binary Search',
+    'Jump Search',
+    'Interpolation Search',
+    'Exponential Search',
+    'Ubiquitous Binary Search'
+]
+var arrayOfDescriptions = [];
+var isRunning = true;
+var isPaused = false;
 
-const inputSpacing = 20;
-
-var inputArray;
 // the index linsearch is currently on
 var currIndex = 0;
-// input components
-var toSearch, method, setFramerate, findMultiple, sort, running = true;
-var searchSpeed = 10;
+
+//----------------------------------------------------------------------------Classes--------------------------------------------------------------------------------
 
 class Cell {
-    constructor(x, y, num, index) {
-        // xpos of the cell
-        this.x = x;
-        // ypos of the cell
-        this.y = y;
-        // the value of the cell
-        this.num = num;
-        // index of the cell
-        this.index = index;
-        // whether the cell has been visited
-        this.visited = false;
+    constructor(number) {
+        this.number = number;
+        this.hasBeenVisited = false;
     }
 
-    // sets whether it is being searched
-    setSearching(searching) {
-        this.searching = searching;
-    }
-
-    // returns the value of the num
-    getNum() {
-        return this.num;
-    }
-
-    // displays the cell
-    show() {
-        // if the cell is being searched
-        if (this.searching == true) {
+    show(x, y, index) {
+        if (this.isBeingSearched) {
             setFill("green");
-            this.visited = true;
-        }
-        // if the cell contain the value to find
-        else if (this.found == true) {
+            this.hasBeenVisited = true;
+        } else if (this.isSearchValue) {
             setFill("red");
-        }
-        // if cell has been visited
-        else if (this.visited == true) {
+        } else if (this.isLowOrHigh) {
+            setFill("blue");
+        } else if (this.hasBeenVisited) {
             setFill("yellow")
-
-        }
-        // if cell has not been processed
-        else {
+        } else {
             setFill("white");
         }
         // draw the cell rectangle
-        rect(this.x, this.y, w, w);
+        rect(x, y, cellWidth, cellWidth);
         setFill("black");
-        // text properties
+
         textAlign(CENTER, CENTER);
-        textSize(w / 2);
+        textSize(cellWidth / 2);
         // draw the number in the cell
-        text(this.num, this.x + w / 2, this.y + w / 2);
+        text(this.number, x + cellWidth / 2, y + cellWidth / 2);
         // draw the index below the cell
-        textSize(indexSize);
-        text(this.index, this.x + w / 2, this.y + w + indexOffset);
-    }
-    // sets if the element has been found
-    setFound(found) {
-        this.found = found;
+        textSize(indexTextSize);
+        text(index, x + cellWidth / 2, y + cellWidth + spacingBtwCellAndIndex);
     }
 
+    getNumber() {
+        return this.number;
+    }
+
+    setIsBeingSearched(isBeingSearched) {
+        this.isBeingSearched = isBeingSearched;
+    }
+
+    setIsSearchValue(isSearchValue) {
+        this.isSearchValue = isSearchValue;
+    }
+
+    setIsLowOrHigh(isLowOrHigh) {
+        this.isLowOrHigh = isLowOrHigh;
+    }
+
+    setHasBeenVisited(hasBeenVisited) {
+        this.hasBeenVisited = hasBeenVisited;
+    }
 }
 
 class TextNInput {
     constructor(text, type) {
         this.text = text;
         this.type = type;
-        this.setWidth();
     }
 
     create() {
         switch (this.type) {
             case "number":
-                this.inp = createInput(1, this.type);
+                this.inputElement = createInput(1, this.type);
                 break;
             case "dropdown":
-                this.inp = createSelect();
+                this.inputElement = createSelect();
+                for (var i in arrayOfSearchAlgos)
+                    this.inputElement.option(arrayOfSearchAlgos[i]);
                 break;
             case "button":
-                this.inp = createButton(this.text);
+                this.inputElement = createButton(this.text);
                 break;
             case "checkbox":
-                this.inp = createCheckbox(this.text, false);
+                this.inputElement = createCheckbox('', false);
                 break;
+        }
+        this.setWidth();
+    }
+
+    drawText(x, y) {
+        if (this.type != "button") {
+            textAlign(LEFT, CENTER);
+            text(this.text, x, y + 3);
         }
     }
 
-    setPosition(x, y) {
-        this.inp.position(textWidth(this.text) + x + inputSpacing, y);
-    }
-
     getWidth() {
+        if (this.type == "checkbox") return textWidth(this.text) + 40;
+        else if (this.type == "button") return this.width;
         return textWidth(this.text) + this.width;
     }
 
-    setWidth() {
-        this.width = this.inp.size()[0] + inputSpacing;
+    getValue() {
+        if (this.type != "checkbox") return this.inputElement.value();
+        else return this.inputElement.checked();
     }
 
+    setWidth() {
+        if (this.type == "number") {
+            this.inputElement.size(widthOfNumberInput);
+        }
+        this.width = this.inputElement.size().width + spacingBtwInputs;
+    }
+
+    setValue(val) {
+        this.inputElement.value(val);
+    }
+
+    setPosition(x, y) {
+        this.inputElement.position(this.type != "button" ? textWidth(this.text) + x + spacingBtwInputs : x + spacingBtwInputs, y);
+    }
 }
 
+//-----------------------------------------------------------------------------Setup and Draw--------------------------------------------------------------------------
 
 // runs once before draw loop
 function setup() {
     //create the canvas of the size of browser window + some margins
-    createCanvas(window.innerWidth - 16, window.innerHeight - 20);
+    createCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin);
     // create the inputs
     createInputs();
     // create the cells array
-    createCells(arrLen);
+    createCells(getInput("Array Length: ").getValue());
     // sets framerate
-    frameRate(5);
+    frameRate(60);
 }
 
 //runs every frame
 function draw() {
-    //sets fill color to white
-    fill(255);
+    getInput('Array Length: ').inputElement.input(updateCells);
+    setFill("white")
+
     //draws background rectangle
     rect(0, 0, width, height);
     //draws the text for the inputs
-    //drawInputText();
+    drawInputs();
 
-    if (frameCount % searchSpeed == 0) {
-        running = true;
-    }
-    else {
-        running = false;
-    }
+    getInput('Start').inputElement.mousePressed(startSearch);
+    getInput('Pause').inputElement.mousePressed(pause);
+    getInput('Sort').inputElement.mousePressed(sortCells);
+    getInput('Randomize').inputElement.mousePressed(randomizeCells);
 
-    if (running) {
-        // sets the cell to being currently searched
-        cells[currIndex].setSearching(true);
-        // draws every cell
-        for (var i = 0; i < arrLen; i++) {
-            cells[i].show();
+    if (frameCount % (60 / framesPerSecond) == 0) {
+        if (!isPaused) {
+            switch (getInput("Search Algorithm: ").getValue()) {
+                case "Linear Search":
+                    stepLinearSearch(lengthOfArray);
+                    break;
+                case "Binary Search":
+                    binarySearch();
+                    break;
+                case "Jump Search":
+                    JumpSearch();
+                    break;
+                case "Interpolation Search":
+                    interpolationSearch();
+                    break;
+                case "Exopential Search":
+                    exponentialSearch();
+                    break;
+            }
         }
-        // sets cell to not being searched
-        cells[currIndex].setSearching(false);
+    }
+    showCells(lengthOfArray);
+}
+
+//-----------------------------------------------------------------------------Input Functions----------------------------------------------------------------------------
+
+// creates the inputs for the constants
+function createInputs() {
+    arrayOfInputs = new Array();
+    for (var obj in arrayOfInputData) {
+        arrayOfInputs.push(new TextNInput(arrayOfInputData[obj].text, arrayOfInputData[obj].type));
+    }
+
+    var cursor = spacingBtwInputs / 2;
+    for (var i = 0; i < arrayOfInputs.length; i++) {
+        arrayOfInputs[i].create();
+        cursor += arrayOfInputs[i].getWidth();
+    }
+    getInput("Array Length: ").setValue(50);
+}
+
+function drawInputs() {
+    var cursor = spacingBtwInputs / 2;
+    for (var i = 0; i < arrayOfInputs.length; i++) {
+        setFill("black");
+        arrayOfInputs[i].drawText(cursor, spacingBtwTopAndInputs);
+        arrayOfInputs[i].setPosition(cursor, spacingBtwTopAndInputs);
+        cursor += arrayOfInputs[i].getWidth();
+    }
+}
+
+function getInput(text) {
+    for (var i in arrayOfInputs) {
+        if (arrayOfInputData[i].text == text) return arrayOfInputs[i];
+    }
+}
+
+//-----------------------------------------------------------------------------Cell Functions--------------------------------------------------------------------------------
+
+// create the cell array with the correct positions
+function createCells(len) {
+    if (len > 0) {
+        // initialize cells
+        arrayOfCells = new Array();
+
+        for (var i = 0; i < len; i++) {
+            // add the new cell to the cells array
+            arrayOfCells.push(new Cell(int(random(minRangeOfRandom, maxRangeOfRandom + 1)), i));
+        }
+    }
+}
+
+function showCells(len) {
+    if (len > 0) {
+        // the maximum number of cells that can fit in the given canvas size
+        maxNum = int((width - cellWidth) / (cellWidth + spacingBtwCells)) + 1;
+        // whether len is bigger or smaller than the maxNum
+        n = constrain(len, 0, maxNum);
+        // Start position so that the cells are aligned to center (first row)
+        startX = (width - n * cellWidth - (n - 1) * spacingBtwCells) / 2;
+
+        for (var i = 0; i < len; i++) {
+            // xpos of the cell
+            x = startX + (i % maxNum) * (spacingBtwCells + cellWidth);
+            // no. of row currently on
+            j = int(i / maxNum);
+            // ypos of the cell
+            y = spacingForInputs + spacingBtwCells + j * (cellWidth + 2 * spacingBtwCellAndIndex);
+
+            arrayOfCells[i].show(x, y, i);
+        }
+    }
+}
+
+function updateCells() {
+    lengthOfArray = getInput('Array Length: ').getValue();
+    createCells(lengthOfArray);
+}
+
+function resetCells() {
+    for (var i in arrayOfCells) {
+        arrayOfCells[i].setIsBeingSearched(false);
+        arrayOfCells[i].setIsLowOrHigh(false);
+        arrayOfCells[i].setIsSearchValue(false);
+        arrayOfCells[i].setHasBeenVisited(false);
+    }
+}
+
+function sortCells() {
+    arrayOfCells.sort(function (cell1, cell2) {
+        return cell1.number - cell2.number
+    });
+}
+
+function randomizeCells() {
+    for (let i = arrayOfCells.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [arrayOfCells[i], arrayOfCells[j]] = [arrayOfCells[j], arrayOfCells[i]];
+    }
+}
+
+//---------------------------------------------------------------------------Search Algorithms-----------------------------------------------------------------------------
+
+var runLinSearch = false;
+
+function initializeLinearSearch(start, len) {
+    currIndex = start;
+    linSearchLen = len;
+    runLinSearch = true;
+}
+
+function stepLinearSearch(len) {
+    if (runLinSearch && currIndex < len) {
+        if (currIndex - 1 >= 0) {
+            arrayOfCells[currIndex - 1].setIsBeingSearched(false);
+        }
+        // sets the cell to being currently searched
+        arrayOfCells[currIndex].setIsBeingSearched(true);
         // if the cell contains the number to search, set its found to true
-        if (cells[currIndex].getNum() == toSearch.value()) {
-            cells[currIndex].setFound(true);
+        if (arrayOfCells[currIndex].getNumber() == getInput("Value to search: ").getValue()) {
+            arrayOfCells[currIndex].setIsSearchValue(true);
+            if (currIndex == len - 1 || !getInput("Find Multiple: ").getValue()) {
+                runLinSearch = false;
+            }
         }
         // increment currIndex
         currIndex++;
         // make sure it doesn't exceed the array bounds
-        currIndex = constrain(currIndex, 0, arrLen - 1);
-    } else {
-        for (var i = 0; i < arrLen; i++) {
-            cells[i].show();
+        currIndex = constrain(currIndex, 0, len);
+
+        if (currIndex == len) {
+            runLinSearch = false;
+        }
+    }
+    else if (currIndex == len) {
+        arrayOfCells[currIndex - 1].setIsBeingSearched(false);
+    }
+}
+
+var low, mid, high;
+
+
+
+function binarySearch() {
+    if (flag) {
+        low = 0;
+        high = lengthOfArray - 1;
+        flag = false;
+    }
+    if (low < high) {
+        arrayOfCells[low].setIsLowOrHigh(false);
+        arrayOfCells[high].setIsLowOrHigh(false);
+        if (mid != undefined) arrayOfCells[mid].setIsBeingSearched(false);
+        mid = int((low + high) / 2);
+        arrayOfCells[low].setIsLowOrHigh(true);
+        arrayOfCells[high].setIsLowOrHigh(true);
+        arrayOfCells[mid].setIsBeingSearched(true);
+
+        if (arrayOfCells[mid].getNumber() == getInput("Value to search: ").getValue()) {
+            arrayOfCells[mid].setIsSearchValue(true);
+        } else if (arrayOfCells[mid].getNumber() >= getInput("Value to search: ").getValue()) {
+            high = mid - 1;
+        } else if (arrayOfCells[mid].getNumber() <= getInput("Value to search: ").getValue()) {
+            low = mid + 1;
         }
     }
 }
 
-
-// create the cell array with the correct positions
-function createCells(len) {
-    // initialize cells
-    cells = new Array();
-    // the maximum number of cells that can fit in the given canvas size
-    maxNum = int((width - w) / (w + spacing)) + 1;
-    // whether len is bigger or smaller than the maxNum
-    n = constrain(len, 0, maxNum);
-    // Start position so that the cells are aligned to center (first row)
-    startX = (width - n * w - (n - 1) * spacing) / 2;
-
-    for (var i = 0; i < len; i++) {
-        // xpos of the cell
-        x = startX + (i % maxNum) * (spacing + w);
-        // no. of row currently on
-        j = int(i / maxNum);
-        // ypos of the cell
-        y = topOffset + spacing + j * (w + 2 * indexOffset);
-        // add the new cell to the cells array
-        cells.push(new Cell(x, y, int(random(0, 10)), i));
-    }
-}
-
-// creates the inputs for the constants
-function createInputs() {
-    inputArray = new Array();
-    inputArray.push(new TextNInput("Value to search: ", "number"));
-    inputArray.push(new TextNInput("Search Algorithm: ", "dropdown"));
-    inputArray.push(new TextNInput("Speed: ", "number"));
-    inputArray.push(new TextNInput("Search Multiple: ", "checkbox"));
-    inputArray.push(new TextNInput("Start", "button"));
-    inputArray.push(new TextNInput("Sort", "button"));
-    var cursor = inputSpacing / 2;
-    for (var e in inputArray) {
-        e.create();
-        e.setPosition(cursor, inputOffset);
-        cursor += e.getWidth();
-    }
-
-    /* // creates the input field for the no. to search for
-    toSearch = createInput(7, "number");
-    // positions the input field
-    toSearch.position(textWidth("Value to search:") + 45, inputOffset);
-    // set width of the input field
-    toSearch.size(inputWidth);
-    // creates the input field to set the
-    setFramerate = createInput(1, "number")
-    // positions the input field
-    setFramerate.position(textWidth("Framerate:") + textWidth("Value to search:") + 100, inputOffset);
-    // set the width of the input field
-    setFramerate.size(inputWidth);
-    // creates the dropdown for the search algorithm to use
-    method = createSelect();
-    // positions the dropdown
-    method.position(500, inputOffset);
-    // add the methods
-    method.option("Linear Search");
-    method.option("Binary Search"); */
-}
-
-function drawInputs() {
-    for (var e in inputArray) {
-        e.draw();
-    }
-}
-
-/* function drawInputText() {
-    setFill("black");
-    // align text to center
-    textAlign(LEFT, CENTER);
-    textX = 20;
-    var textArr = [];
-    var inputTypes =
-    for (vae i = 0; i < textArr.length; i++){
-
-        textX += textWidth(textArr[i]);
-
-    }
-    // text for the no. to search for
-    text("Value to search:", textX, inputOffset + 3);
-
-    textX += textWidth("Value to search:");
-    textX += inputWidth + 10;
-    // text for the framerate input
-    text("Framerate:", textX, inputOffset + 3);
-
-    textX += textWidth("Framerate:");
-    textX += inputWidth + 20;
-    // text for search algorithm select
-    text("Search Algorithm: ", textX, inputOffset + 3);
-} */
+//---------------------------------------------------------------------------Other Functions-----------------------------------------------------------------------------
 
 // sets fill color depending on the color string
+
+function startSearch() {
+    resetCells();
+    initializeLinearSearch(0, lengthOfArray);
+}
+
+function pause() {
+    isPaused = isPaused ? false : true;
+}
+
 function setFill(color) {
     switch (color) {
         case "yellow":
@@ -299,7 +440,7 @@ function setFill(color) {
 
 // resizes cavas on window resize
 window.onresize = function () {
-    resizeCanvas(window.innerWidth - 15, window.innerHeight - 20);
+    resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin);
     // recreate the cells array
-    createCells(arrLen);
+    createCells(lengthOfArray);
 };
