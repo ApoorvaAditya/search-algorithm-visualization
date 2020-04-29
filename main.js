@@ -306,6 +306,11 @@ function showCells(len) {
             arrayOfCells[i].show(x, y, i);
         }
     }
+    maxNum = int((width - cellWidth) / (cellWidth + spacingBtwCells)) + 1;
+    maxHeight = spacingForInputs + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
+    if (maxHeight > height) {
+        resizeCanvas(width - horizontalMargin, maxHeight);
+    }
 }
 
 function updateCells() {
@@ -357,6 +362,7 @@ function stepLinearSearch(len) {
             arrayOfCells[currIndex].setIsSearchValue(true);
             if (currIndex == len - 1 || !getInput("Find Multiple: ").getValue()) {
                 runLinSearch = false;
+                arrayOfCells[currIndex].setIsBeingSearched(false);
             }
         }
         // increment currIndex
@@ -375,14 +381,7 @@ function stepLinearSearch(len) {
 
 var low, mid, high;
 
-
-
 function binarySearch() {
-    if (flag) {
-        low = 0;
-        high = lengthOfArray - 1;
-        flag = false;
-    }
     if (low < high) {
         arrayOfCells[low].setIsLowOrHigh(false);
         arrayOfCells[high].setIsLowOrHigh(false);
@@ -408,7 +407,12 @@ function binarySearch() {
 
 function startSearch() {
     resetCells();
-    initializeLinearSearch(0, lengthOfArray);
+    switch (getInput("Search Algorithm: ").getValue()) {
+        case "Linear Search":
+            initializeLinearSearch(0, lengthOfArray);
+            break;
+    }
+
 }
 
 function pause() {
