@@ -91,10 +91,10 @@ class Cell {
             this.hasBeenVisited = true;
         } else if (this.isSearchValue) {
             setFill("red");
-        } else if (this.isLowOrHigh) {
-            setFill("blue");
         } else if (this.hasBeenVisited) {
             setFill("yellow")
+        } else if (this.isLowOrHigh) {
+            setFill("blue");
         } else {
             setFill("white");
         }
@@ -202,6 +202,7 @@ function setup() {
     createInputs();
     // create the cells array
     createCells(getInput("Array Length: ").getValue());
+    getInput('Frames per second: ').setValue(10);
     // sets framerate
     frameRate(60);
 }
@@ -363,11 +364,12 @@ var linSearchCurrIndex, linSearchLen, runLinSearch = false;
 function initializeLinearSearch(start, len) {
     linSearchCurrIndex = start;
     linSearchLen = len;
+    linSearchStart = start;
     runLinSearch = true;
 }
 
 function stepLinearSearch() {
-    if (runLinSearch && linSearchCurrIndex < linSearchLen) {
+    if (runLinSearch && linSearchCurrIndex <= linSearchLen + linSearchStart) {
         if (linSearchCurrIndex - 1 >= 0) {
             arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
         }
@@ -383,13 +385,13 @@ function stepLinearSearch() {
         }
         // increment linSearchCurrIndex
         linSearchCurrIndex++;
-        // make sure it doesn't exceed the array bounds
-        linSearchCurrIndex = constrain(linSearchCurrIndex, 0, linSearchLen);
+        // make sure it doesn't exceed the array bounds (this is prob unnecessary and therefore linSearchStart too)
+        //linSearchCurrIndex = constrain(linSearchCurrIndex, linSearchStart, linSearchLen + linSearchStart);
 
-        if (linSearchCurrIndex == linSearchLen) {
+        if (linSearchCurrIndex == linSearchLen + linSearchStart) {
             runLinSearch = false;
         }
-    } else if (linSearchCurrIndex == linSearchLen) {
+    } else if (linSearchCurrIndex == linSearchLen + linSearchStart) {
         arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
     }
 }
@@ -435,12 +437,39 @@ function stepBinarySearch() {
 }
 
 var runJumpSearch = false,
-    jumpSearchLen, jumpSearchStep;
+    jumpSearchLen, jumpSearchStep, step, jumpSearchCurrIndex, prevIndex;
 
 function initializeJumpSearch(start, len) {
+    sortCells();
     runJumpSearch = true;
+    jumpSearchStart = start;
+    jumpSearchCurrIndex = start;
     jumpSearchLen = len;
+    step = int(Math.sqrt(jumpSearchLen));
+}
 
+//flag = true;
+
+function stepJumpSearch() {
+    if (runJumpSearch && jumpSearchCurrIndex < jumpSearchLen) {
+        if (jumpSearchCurrIndex - 2 * step >= jumpSearchStart) {
+            arrayOfCells[jumpSearchCurrIndex - 2 * step].setIsLowOrHigh(false);
+        }
+        arrayOfCells[jumpSearchCurrIndex].setIsLowOrHigh(true);
+
+        if (arrayOfCells[jumpSearchCurrIndex].getNumber() < getInput("Value to search: ").getValue()) {
+            jumpSearchCurrIndex += step;
+        }
+        else {
+            initializeLinearSearch(jumpSearchCurrIndex - step, step + 1);
+            runJumpSearch = false;
+        }
+    }
+    else {
+        if (arrayOfCells[linSearchCurrIndex].getNumber() <= getInput("Value to search: ").getValue()) {
+            stepLinearSearch();
+        }
+    }
 }
 
 
@@ -450,6 +479,7 @@ function initializeJumpSearch(start, len) {
 
 function startSearch() {
     resetCells();
+    isPaused = false;
     switch (getInput("Search Algorithm: ").getValue()) {
         case "Linear Search":
             initializeLinearSearch(0, lengthOfArray);
