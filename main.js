@@ -244,7 +244,6 @@ function setup() {
     getInput('Frames per second: ').setValue(10);
     getInput('Minimum random value: ').setValue(0);
     getInput('Maximum random value: ').setValue(10);
-    print(textHeight(arrayOfDescriptions[0].description, width));
 
     // sets framerate
     frameRate(60);
@@ -604,7 +603,6 @@ function initializeExponentialSearch(start, len) {
 
 function stepExponentialSearch() {
     if (runExponentialSearch) {
-        print("high: ", exponentialSearchHigh, " | low: ", exponentialSearchLow);
         if (prevExponentialSearchHigh != undefined) {
             arrayOfCells[prevExponentialSearchHigh].setIsLowOrHigh(false);
         }
@@ -647,7 +645,6 @@ function initializeFibonacciSearch(start, len) {
 
 function stepFibonacciSearch() {
     if (runFibonacciSearch) {
-        print(fibM);
         if (fibM > 1) {
             if (i != undefined) {
                 arrayOfCells[i].setIsBeingSearched(false);
@@ -772,7 +769,6 @@ function textHeight(text, maxWidth) {
     for (var i = 0; i < words.length; i++) {
         testLine += words[i] + ' ';
         var testLineWidth = textWidth(testLine);
-        print(testLine, maxWidth, testLineWidth);
         if (testLineWidth > maxWidth && i > 0) {
             testLine = words[i] + ' ';
             h += textAscent() + textDescent();
