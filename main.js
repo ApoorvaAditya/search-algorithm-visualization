@@ -10,6 +10,7 @@ const verticalMargin = 20;
 const customFramerate = 5;
 const heightOfInputs = 30;
 var spacingForInputs = 50;
+var spacingForDesc;
 var minRangeOfRandom = 0; // Inclusive
 var maxRangeOfRandom = 10; // Inclusive
 var lengthOfArray = 50;
@@ -75,13 +76,13 @@ var arrayOfSearchAlgos = ['Linear Search',
 ]
 var arrayOfDescriptions = [{
         text: "Linear Search",
-        description: "",
+        description: "Starts from leftmost element and compares each element of the array with the value to find. asdhgkha sdashdohoau we a dhuao da osd a s",
         timeComplexity: "O(n)",
-        spaceComplexity: "O()"
+        spaceComplexity: "O(1)"
     },
     {
         text: "Binary Search",
-        description: "",
+        description: "This is binary search",
         timeComplexity: "O(log(n))",
         spaceComplexity: "O()"
     },
@@ -125,14 +126,14 @@ class Cell {
 
     show(x, y, index) {
         if (this.isBeingSearched) {
-            setFill("green");
+            setFill("orange");
             this.hasBeenVisited = true;
         } else if (this.isSearchValue) {
-            setFill("red");
+            setFill("green");
         } else if (this.hasBeenVisited) {
-            setFill("yellow")
+            setFill("grey")
         } else if (this.isLowOrHigh) {
-            setFill("blue");
+            setFill("light blue");
         } else {
             setFill("white");
         }
@@ -243,6 +244,7 @@ function setup() {
     getInput('Frames per second: ').setValue(10);
     getInput('Minimum random value: ').setValue(0);
     getInput('Maximum random value: ').setValue(10);
+    print(textHeight(arrayOfDescriptions[0].description, width));
 
     // sets framerate
     frameRate(60);
@@ -257,13 +259,14 @@ function draw() {
     getInput('Maximum random value: ').inputElement.input(recreateCells);
     framesPerSecond = getInput('Frames per second: ').getValue();
     valueToSearch = getInput('Value to search: ').getValue();
+    getInput('Search Algorithm: ').inputElement.input(drawDescription);
     setFill("white")
 
     //draws background rectangle
     rect(0, 0, width, height);
     //draws the text for the inputs
     drawInputs();
-
+    drawDescription();
     /* unique = getInput('Unique values: ').inputElement.input(setUnique);
     if (unique) {
         if (getInput('Unique values: ').getValue()) {
@@ -383,13 +386,13 @@ function showCells(len) {
             // no. of row currently on
             j = int(i / maxNum);
             // ypos of the cell
-            y = spacingForInputs + spacingBtwCells + j * (cellWidth + 2 * spacingBtwCellAndIndex);
+            y = spacingForInputs + spacingForDesc + spacingBtwCells + j * (cellWidth + 2 * spacingBtwCellAndIndex);
 
             arrayOfCells[i].show(x, y, i);
         }
     }
     maxNum = int((width - cellWidth) / (cellWidth + spacingBtwCells)) + 1;
-    maxHeight = spacingForInputs + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
+    maxHeight = spacingForInputs + spacingForDesc + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
     if (maxHeight > height) {
         resizeCanvas(width, maxHeight);
     }
@@ -724,14 +727,30 @@ function setFill(color) {
         case "black":
             fill(0);
             break;
+        case "orange":
+            fill(255, 165, 0);
+            break;
+        case "grey":
+            fill(220, 220, 220);
+            break;
+        case "light blue":
+            fill(0, 191, 255);
+            break;
     }
 }
 
-/*
-function setUnique() {
-    if (getInput('Unique values: ').getValue()) unique = true;
-    else unique = false;
-} */
+
+function drawDescription() {
+    for (var i in arrayOfDescriptions) {
+        if (arrayOfDescriptions[i].text == getInput('Search Algorithm: ').getValue()) {
+            var desc = "Description: " + arrayOfDescriptions[i].description;
+            spacingForDesc = textHeight(desc, width);
+            textAlign(LEFT, TOP);
+            text(desc, spacingBtwInputs / 2, spacingForInputs, width - horizontalMargin, spacingForDesc);
+            break;
+        }
+    }
+}
 
 var fibonacciNumbers = [0, 1];
 
@@ -745,10 +764,23 @@ function fibonacciNumber(n) {
     }
 }
 
-/* function getFibonacciGreaterOrEqual(n) {
-    for (var i = 0; i < )
+function textHeight(text, maxWidth) {
+    var words = text.split(' ');
+    var line = '';
+    var h = textLeading();
+    var testLine = line;
+    for (var i = 0; i < words.length; i++) {
+        testLine += words[i] + ' ';
+        var testLineWidth = textWidth(testLine);
+        print(testLine, maxWidth, testLineWidth);
+        if (testLineWidth > maxWidth && i > 0) {
+            testLine = words[i] + ' ';
+            h += textAscent() + textDescent();
+        }
+    }
+    return h + textLeading();
 }
- */
+
 // resizes cavas on window resize
 window.onresize = function () {
     resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin);
