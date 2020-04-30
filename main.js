@@ -58,13 +58,13 @@ var arrayOfInputData = [{
         type: "button"
     },
     {
-        text: "Find Multiple: ",
+        text: "Find multiple: ",
         type: "checkbox"
-    },
+    }/* ,
     {
-        text: "Unique Values: ",
+        text: "Unique values: ",
         type: "checkbox"
-    }
+    } */
 ];
 var arrayOfSearchAlgos = ['Linear Search',
     'Binary Search',
@@ -241,6 +241,8 @@ function setup() {
     // create the cells array
     createCells(getInput("Array Length: ").getValue());
     getInput('Frames per second: ').setValue(10);
+    getInput('Minimum random value: ').setValue(0);
+    getInput('Maximum random value: ').setValue(10);
 
     // sets framerate
     frameRate(60);
@@ -251,6 +253,8 @@ function draw() {
     getInput('Array Length: ').inputElement.input(updateCells);
     minRangeOfRandom = getInput('Minimum random value: ').getValue();
     maxRangeOfRandom = getInput('Maximum random value: ').getValue();
+    getInput('Minimum random value: ').inputElement.input(recreateCells);
+    getInput('Maximum random value: ').inputElement.input(recreateCells);
     framesPerSecond = getInput('Frames per second: ').getValue();
     valueToSearch = getInput('Value to search: ').getValue();
     setFill("white")
@@ -260,6 +264,17 @@ function draw() {
     //draws the text for the inputs
     drawInputs();
 
+    /* unique = getInput('Unique values: ').inputElement.input(setUnique);
+    if (unique) {
+        if (getInput('Unique values: ').getValue()) {
+            lengthOfArray = maxRangeOfRandom - minRangeOfRandom;
+            for (var i = 0; i < lengthOfArray; i++) {
+                arrayOfCells[i] = i + minRangeOfRandom;
+            }
+            randomizeCells();
+            unique = false
+        }
+    } */
     getInput('Start').inputElement.mousePressed(startSearch);
     getInput('Pause').inputElement.mousePressed(pause);
     getInput('Sort').inputElement.mousePressed(sortCells);
@@ -284,7 +299,7 @@ function draw() {
                     stepExponentialSearch();
                     break;
                 case "Fibonacci Search":
-                    stepFibancciSearch();
+                    stepFibonacciSearch();
                     break;
             }
         }
@@ -335,15 +350,22 @@ function getInput(text) {
 
 // create the cell array with the correct positions
 function createCells(len) {
-    if (len > 0) {
-        // initialize cells
-        arrayOfCells = new Array();
+    if (minRangeOfRandom != undefined && maxRangeOfRandom != undefined) {
+        if (len > 0) {
+            // initialize cells
+            arrayOfCells = new Array();
 
-        for (var i = 0; i < len; i++) {
-            // add the new cell to the cells array
-            arrayOfCells.push(new Cell(int(random(minRangeOfRandom, maxRangeOfRandom + 1)), i));
+            for (var i = 0; i < len; i++) {
+                // add the new cell to the cells array
+                number = Math.floor(Math.random() * (+maxRangeOfRandom - +minRangeOfRandom)) + +minRangeOfRandom + 1;
+                arrayOfCells.push(new Cell(number, i));
+            }
         }
     }
+}
+
+function recreateCells() {
+    createCells(lengthOfArray);
 }
 
 function showCells(len) {
@@ -369,7 +391,7 @@ function showCells(len) {
     maxNum = int((width - cellWidth) / (cellWidth + spacingBtwCells)) + 1;
     maxHeight = spacingForInputs + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
     if (maxHeight > height) {
-        resizeCanvas(width - horizontalMargin, maxHeight);
+        resizeCanvas(width, maxHeight);
     }
 }
 
@@ -402,7 +424,8 @@ function randomizeCells() {
 
 //---------------------------------------------------------------------------Search Algorithms-----------------------------------------------------------------------------
 
-var linSearchCurrIndex, linSearchLen, runLinSearch = false, linSearchStart;
+var linSearchCurrIndex, linSearchLen, runLinSearch = false,
+    linSearchStart;
 
 function initializeLinearSearch(start, len) {
     linSearchCurrIndex = start;
@@ -421,7 +444,7 @@ function stepLinearSearch() {
         // if the cell contains the number to search, set its found to true
         if (arrayOfCells[linSearchCurrIndex].getNumber() == valueToSearch) {
             arrayOfCells[linSearchCurrIndex].setIsSearchValue(true);
-            if (linSearchCurrIndex == linSearchLen - 1 || !getInput("Find Multiple: ").getValue()) {
+            if (linSearchCurrIndex == linSearchLen - 1 || !getInput("Find multiple: ").getValue()) {
                 runLinSearch = false;
                 arrayOfCells[linSearchCurrIndex].setIsBeingSearched(false);
             }
@@ -464,11 +487,11 @@ function stepBinarySearch() {
         prevbinarySearchHigh = binarySearchHigh;
         if (arrayOfCells[mid].getNumber() == valueToSearch) {
             arrayOfCells[mid].setIsSearchValue(true);
-            if (binarySearchLow >= binarySearchHigh || !getInput("Find Multiple: ").getValue()) {
+            if (binarySearchLow >= binarySearchHigh || !getInput("Find multiple: ").getValue()) {
                 runBinarySearch = false;
                 arrayOfCells[mid].setIsBeingSearched(false);
             }
-            /* else if (getInput("Find Multiple: ").getValue()) {
+            /* else if (getInput("Find multiple: ").getValue()) {
 
             } */
         } else if (arrayOfCells[mid].getNumber() >= valueToSearch) {
@@ -549,7 +572,7 @@ function stepInterpolationSearch() {
             if (arrayOfCells[pos].getNumber() == valueToSearch) {
                 arrayOfCells[pos].setIsSearchValue(true);
                 arrayOfCells[pos].setIsBeingSearched(false);
-                if (getInput("Find Multiple: ").getValue()) {
+                if (getInput("Find multiple: ").getValue()) {
                     //change
                     runInterpolationSearch = false;
                 } else {
@@ -605,7 +628,7 @@ function stepExponentialSearch() {
     }
 }
 
-/* var runFibonacciSearch = false, fibonacciSearchStart, fibonacciSearchLen, fibM, i = 0;
+var runFibonacciSearch = false, fibonacciSearchStart, fibonacciSearchLen, fibM = 0, fibMMm1 = 1, fibMMm2 = 0, offset = 0, i;
 
 function initializeFibonacciSearch(start, len) {
     sortCells();
@@ -613,15 +636,37 @@ function initializeFibonacciSearch(start, len) {
     fibonacciSearchStart = start;
     fibonacciSearchLen = len;
     while (fibM < fibonacciSearchLen) {
-        fibM = fibonacciNumber(i)
-        i++;
+        fibMMm2 = fibMMm1;
+        fibMMm1 = fibM;
+        fibM = fibMMm1 + fibMMm2;
     }
 }
- */
+
 function stepFibonacciSearch() {
     if (runFibonacciSearch) {
+        print(fibM);
         if (fibM > 1) {
-
+            if (i != undefined) {
+                arrayOfCells[i].setIsBeingSearched(false);
+            }
+            i = Math.min(offset + fibMMm2, fibonacciSearchLen - 1);
+            arrayOfCells[i].setIsBeingSearched(true);
+            if (arrayOfCells[i].getNumber() < valueToSearch) {
+                fibM = fibMMm1;
+                fibMMm1 = fibMMm2
+                fibMMm2 = fibM - fibMMm1;
+                offset = i;
+            }
+            else if (arrayOfCells[i].getNumber() > valueToSearch) {
+                fibM = fibMMm2;
+                fibMMm1 = fibMMm1 - fibMMm2;
+                fibMMm2 = fibM - fibMMm1;
+            }
+            else {
+                arrayOfCells[i].setIsSearchValue(true);
+                arrayOfCells[i].setIsBeingSearched(false);
+                runFibonacciSearch = false;
+            }
         }
     }
 }
@@ -650,7 +695,7 @@ function startSearch() {
             initializeExponentialSearch(0, lengthOfArray);
             break;
         case "Fibonacci Search":
-            initializeExponentialSearch(0, lengthOfArray);
+            initializeFibonacciSearch(0, lengthOfArray);
     }
 
 }
@@ -681,6 +726,12 @@ function setFill(color) {
             break;
     }
 }
+
+/*
+function setUnique() {
+    if (getInput('Unique values: ').getValue()) unique = true;
+    else unique = false;
+} */
 
 var fibonacciNumbers = [0, 1];
 
