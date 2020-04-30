@@ -694,10 +694,10 @@ function fibonacciNumber(n) {
     }
 }
 
-function getFibonacciGreaterOrEqual(n) {
+/* function getFibonacciGreaterOrEqual(n) {
     for (var i = 0; i < )
 }
-
+ */
 // resizes cavas on window resize
 window.onresize = function () {
     resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin);
