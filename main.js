@@ -605,18 +605,24 @@ function stepExponentialSearch() {
     }
 }
 
-var runFibonacciSearch = false, fibonacciSearchStart, fibonacciSearchLen;
+/* var runFibonacciSearch = false, fibonacciSearchStart, fibonacciSearchLen, fibM, i = 0;
 
 function initializeFibonacciSearch(start, len) {
     sortCells();
     runFibonacciSearch = true;
     fibonacciSearchStart = start;
     fibonacciSearchLen = len;
+    while (fibM < fibonacciSearchLen) {
+        fibM = fibonacciNumber(i)
+        i++;
+    }
 }
-
+ */
 function stepFibonacciSearch() {
     if (runFibonacciSearch) {
+        if (fibM > 1) {
 
+        }
     }
 }
 
@@ -686,6 +692,10 @@ function fibonacciNumber(n) {
         fibonacciNumbers.push(fibonacciNumber(n - 1) + fibonacciNumber(n - 2))
         return fibonacciNumbers[n];
     }
+}
+
+function getFibonacciGreaterOrEqual(n) {
+    for (var i = 0; i < )
 }
 
 // resizes cavas on window resize
