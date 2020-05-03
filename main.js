@@ -11,12 +11,14 @@ const customFramerate = 5;
 const heightOfInputs = 30;
 var spacingForInputs = 50;
 var spacingForDesc;
+var spacingForInfo;
 var minRangeOfRandom = 0; // Inclusive
 var maxRangeOfRandom = 10; // Inclusive
 var lengthOfArray = 50;
 var framesPerSecond = 10;
 var valueToSearch;
 var currentSearchAlgorithm;
+var arrayOfFoundIndex;
 var arrayOfCells;
 var arrayOfInputs;
 var arrayOfInputData = [{
@@ -24,7 +26,7 @@ var arrayOfInputData = [{
         type: "dropdown"
     },
     {
-        text: "Array Length: ",
+        text: "Array length: ",
         type: "number"
     },
     {
@@ -62,11 +64,11 @@ var arrayOfInputData = [{
     {
         text: "Find multiple: ",
         type: "checkbox"
-    },/*
+    },
     {
         text: "Unique values: ",
         type: "checkbox"
-    } */
+    }
 ];
 var arrayOfSearchAlgos = ['Linear Search',
     'Binary Search',
@@ -222,7 +224,12 @@ class TextNInput {
     }
 
     setValue(val) {
-        this.inputElement.value(val);
+        if (this.type != "checkbox") {
+            this.inputElement.value(val);
+        }
+        else  {
+            this.inputElement.checked(val)  ;
+        }
     }
 
     setText(text) {
@@ -243,11 +250,11 @@ function setup() {
     // create the inputs
     createInputs();
     // create the cells array
-    createCells(getInput("Array Length: ").getValue());
+    createCells(getInput("Array length: ").getValue());
     getInput('Frames per second: ').setValue(10);
     getInput('Minimum random value: ').setValue(0);
     getInput('Maximum random value: ').setValue(10);
-    getInput('Array Length: ').inputElement.input(updateCells);
+    getInput('Array length: ').inputElement.input(updateCells);
     getInput('Minimum random value: ').inputElement.input(recreateCells);
     getInput('Maximum random value: ').inputElement.input(recreateCells);
     getInput('Search Algorithm: ').inputElement.input(drawDescription);
@@ -257,8 +264,11 @@ function setup() {
     getInput('Shuffle').inputElement.mousePressed(shuffleCells);
     getInput('Frames per second: ').inputElement.input(setFramesPerSecond);
     getInput('Search Algorithm: ').inputElement.input(setSearchAlgo);
+    getInput('Unique values: ').inputElement.input(setUnique);
+    getInput('Value to search: ').inputElement.input(setValueToSearch);
     setSearchAlgo();
     setValueToSearch();
+    arrayOfFoundIndex = new Array();
 }
 
 //runs every frame
@@ -269,18 +279,7 @@ function draw() {
     //draws the text for the inputs
     drawInputs();
     drawDescription();
-    /* unique = getInput('Unique values: ').inputElement.input(setUnique);
-    if (unique) {
-        if (getInput('Unique values: ').getValue()) {
-            lengthOfArray = maxRangeOfRandom - minRangeOfRandom;
-            for (var i = 0; i < lengthOfArray; i++) {
-                arrayOfCells[i] = i + minRangeOfRandom;
-            }
-            shuffleCells();
-            unique = false
-        }
-    } */
-
+    drawSearchData();
     if (frameCount % (60 / framesPerSecond) == 0) {
         if (!isPaused && isRunning) {
             switch (getInput("Search Algorithm: ").getValue()) {
@@ -322,7 +321,7 @@ function createInputs() {
         arrayOfInputs[i].create();
         cursor += arrayOfInputs[i].getWidth();
     }
-    getInput("Array Length: ").setValue(50);
+    getInput("Array length: ").setValue(50);
 }
 
 function drawInputs() {
@@ -359,7 +358,7 @@ function createCells(len) {
             for (var i = 0; i < len; i++) {
                 // add the new cell to the cells array
                 number = Math.floor(Math.random() * (maxRangeOfRandom - minRangeOfRandom + 1)) + minRangeOfRandom;
-                arrayOfCells.push(new Cell(number, i));
+                arrayOfCells.push(new Cell(number));
             }
         }
     }
@@ -382,30 +381,39 @@ function showCells(len) {
         // Start position so that the cells are aligned to center (first row)
         startX = (width - n * cellWidth - (n - 1) * spacingBtwCells) / 2;
 
+        var startHeight = spacingForInputs + spacingForDesc + spacingForInfo;
+
         for (var i = 0; i < len; i++) {
             // xpos of the cell
             x = startX + (i % maxNum) * (spacingBtwCells + cellWidth);
             // no. of row currently on
             j = int(i / maxNum);
             // ypos of the cell
-            y = spacingForInputs + spacingForDesc + spacingBtwCells + j * (cellWidth + 2 * spacingBtwCellAndIndex);
+            y = startHeight + spacingBtwCells + j * (cellWidth + 2 * spacingBtwCellAndIndex);
 
             arrayOfCells[i].show(x, y, i);
         }
     }
     maxNum = int((width - cellWidth) / (cellWidth + spacingBtwCells)) + 1;
-    maxHeight = spacingForInputs + spacingForDesc + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
+    maxHeight = startHeight + spacingBtwCells + (int(len / maxNum) + 1) * (cellWidth + 2 * spacingBtwCellAndIndex);
     if (maxHeight > height) {
         resizeCanvas(width, maxHeight);
     }
 }
 
 function updateCells() {
-    lengthOfArray = getInput('Array Length: ').getValue();
+    lengthOfArray = getInput('Array length: ').getValue();
     createCells(lengthOfArray);
 }
 
 function resetCells() {
+    arrayOfFoundIndex = new Array();
+    runLinSearch = false;
+    runBinarySearch = false;
+    runJumpSearch = false;
+    runInterpolationSearch = false;
+    runExponentialSearch = false;
+    runFibonacciSearch = false;
     for (var i in arrayOfCells) {
         arrayOfCells[i].setIsBeingSearched(false);
         arrayOfCells[i].setIsLowOrHigh(false);
@@ -421,6 +429,7 @@ function sortCells() {
 }
 
 function shuffleCells() {
+    resetCells();
     for (let i = arrayOfCells.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
         [arrayOfCells[i], arrayOfCells[j]] = [arrayOfCells[j], arrayOfCells[i]];
@@ -441,7 +450,7 @@ function initializeLinearSearch(start, len) {
 }
 
 function stepLinearSearch() {
-    if (runLinSearch && linSearchCurrIndex <= linSearchLen + linSearchStart) {
+    if (runLinSearch && linSearchCurrIndex < linSearchLen + linSearchStart) {
         if (linSearchCurrIndex - 1 >= 0) {
             arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
         }
@@ -450,6 +459,7 @@ function stepLinearSearch() {
         // if the cell contains the number to search, set its found to true
         if (arrayOfCells[linSearchCurrIndex].getNumber() == valueToSearch) {
             arrayOfCells[linSearchCurrIndex].setIsSearchValue(true);
+            arrayOfFoundIndex.push(linSearchCurrIndex);
             if (linSearchCurrIndex == linSearchLen - 1 || !getInput("Find multiple: ").getValue()) {
                 runLinSearch = false;
                 arrayOfCells[linSearchCurrIndex].setIsBeingSearched(false);
@@ -468,10 +478,12 @@ function stepLinearSearch() {
 }
 
 var binarySearchLow, mid, binarySearchHigh, runBinarySearch = false,
-    prevbinarySearchLow, prevbinarySearchHigh;
+    prevbinarySearchLow, prevbinarySearchHigh, binarySearchStart, binarySearchLen;
 
 function initializeBinarySearch(start, len) {
     sortCells();
+    binarySearchStart = start;
+    binarySearchLen = len;
     binarySearchLow = start;
     binarySearchHigh = start + len - 1;
     runBinarySearch = true;
@@ -492,13 +504,9 @@ function stepBinarySearch() {
         prevbinarySearchHigh = binarySearchHigh;
         if (arrayOfCells[mid].getNumber() == valueToSearch) {
             arrayOfCells[mid].setIsSearchValue(true);
-            if (binarySearchLow >= binarySearchHigh || !getInput("Find multiple: ").getValue()) {
-                runBinarySearch = false;
-                arrayOfCells[mid].setIsBeingSearched(false);
-            }
-            /* else if (getInput("Find multiple: ").getValue()) {
-
-            } */
+            arrayOfFoundIndex.push(mid);
+            runBinarySearch = false;
+            arrayOfCells[mid].setIsBeingSearched(false);
         } else if (arrayOfCells[mid].getNumber() >= valueToSearch) {
             binarySearchHigh = mid - 1;
         } else if (arrayOfCells[mid].getNumber() <= valueToSearch) {
@@ -532,7 +540,7 @@ function stepJumpSearch() {
             initializeLinearSearch(jumpSearchCurrIndex - step, jumpSearchLen);
             runJumpSearch = false;
         }
-    } else {
+    } else if (runLinSearch) {
         if (arrayOfCells[linSearchCurrIndex].getNumber() <= valueToSearch) {
             stepLinearSearch();
         } else {
@@ -563,30 +571,30 @@ function stepInterpolationSearch() {
         if (prevInterpolationSearchLow != undefined) {
             arrayOfCells[prevInterpolationSearchLow].setIsLowOrHigh(false);
         }
-        if (pos != undefined) {
+        if (pos != undefined && pos < interpolationSearchStart + interpolationSearchLen) {
             arrayOfCells[pos].setIsBeingSearched(false);
         }
 
         if (arrayOfCells[interpolationSearchHigh].getNumber() != arrayOfCells[interpolationSearchLow].getNumber()) {
             pos = int(interpolationSearchLow + ((valueToSearch - arrayOfCells[interpolationSearchLow].getNumber()) * (interpolationSearchHigh - interpolationSearchLow) / (arrayOfCells[interpolationSearchHigh].getNumber() - arrayOfCells[interpolationSearchLow].getNumber())))
-            arrayOfCells[pos].setIsBeingSearched(true);
-            arrayOfCells[interpolationSearchHigh].setIsLowOrHigh(true);
-            arrayOfCells[interpolationSearchLow].setIsLowOrHigh(true);
-            prevInterpolationSearchHigh = interpolationSearchHigh;
-            prevInterpolationSearchLow = interpolationSearchLow;
-            if (arrayOfCells[pos].getNumber() == valueToSearch) {
-                arrayOfCells[pos].setIsSearchValue(true);
-                arrayOfCells[pos].setIsBeingSearched(false);
-                if (getInput("Find multiple: ").getValue()) {
-                    //change
+            if (pos < interpolationSearchStart + interpolationSearchLen) {
+                arrayOfCells[pos].setIsBeingSearched(true);
+                arrayOfCells[interpolationSearchHigh].setIsLowOrHigh(true);
+                arrayOfCells[interpolationSearchLow].setIsLowOrHigh(true);
+                prevInterpolationSearchHigh = interpolationSearchHigh;
+                prevInterpolationSearchLow = interpolationSearchLow;
+                if (arrayOfCells[pos].getNumber() == valueToSearch) {
+                    arrayOfCells[pos].setIsSearchValue(true);
+                    arrayOfCells[pos].setIsBeingSearched(false);
+                    arrayOfFoundIndex.push(pos);
                     runInterpolationSearch = false;
-                } else {
-                    runInterpolationSearch = false;
+                } else if (arrayOfCells[pos].getNumber() > valueToSearch) {
+                    interpolationSearchHigh = pos - 1;
+                } else if (arrayOfCells[pos].getNumber() < valueToSearch) {
+                    interpolationSearchLow = pos + 1;
                 }
-            } else if (arrayOfCells[pos].getNumber() > valueToSearch) {
-                interpolationSearchHigh = pos - 1;
-            } else if (arrayOfCells[pos].getNumber() < valueToSearch) {
-                interpolationSearchLow = pos + 1;
+            } else {
+                runInterpolationSearch = false;
             }
         }
     }
@@ -671,6 +679,7 @@ function stepFibonacciSearch() {
             } else {
                 arrayOfCells[i].setIsSearchValue(true);
                 arrayOfCells[i].setIsBeingSearched(false);
+                arrayOfFoundIndex.push(i);
                 runFibonacciSearch = false;
             }
         }
@@ -683,6 +692,7 @@ function stepFibonacciSearch() {
 
 function startSearch() {
     resetCells();
+    arrayOfFoundIndex = new Array();
     if (isPaused) pause();
     switch (getInput("Search Algorithm: ").getValue()) {
         case "Linear Search":
@@ -761,8 +771,33 @@ function drawDescription() {
 }
 
 function drawSearchData() {
-    // TODO: Draw the found or not text
+
+    // Current Index
+    
+    //Value at current Index
     // TODO: For each algo, display relevant data
+    // Found Text
+    if (arrayOfFoundIndex != undefined) {
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        var foundText;
+        if (arrayOfFoundIndex.length > 0) {
+            foundText = "Found at index(es): ";
+            for (var i = 0; i < arrayOfFoundIndex.length; i++) {
+                if (i != arrayOfFoundIndex.length - 1) {
+                    foundText += arrayOfFoundIndex[i].toString() + ", ";
+                } else {
+                    foundText += arrayOfFoundIndex[i].toString();
+                }
+            }
+        } else {
+            foundText = "Not Found";
+        }
+        var heightOfFoundText = textHeight(foundText, width);
+        text(foundText, spacingBtwInputs / 2, spacingForInputs + spacingForDesc, width - horizontalMargin, heightOfFoundText + 14);
+        spacingForInfo = heightOfFoundText;
+        textStyle(NORMAL);
+    }
 }
 
 
@@ -798,11 +833,45 @@ function setFramesPerSecond() {
 }
 
 function setValueToSearch() {
+    resetCells();
     valueToSearch = parseInt(getInput('Value to search: ').getValue());
 }
 
+var multipleValuesAvailable = ["Linear Search",]
+
 function setSearchAlgo() {
     currentSearchAlgorithm = getInput('Search Algorithm: ').getValue();
+    if (multipleValuesAvailable.includes(currentSearchAlgorithm)) {
+        enableMultipleValues(true);
+    }
+    else {
+        enableMultipleValues(false);
+    }
+}
+
+function setUnique() {
+    resetCells();
+    var unique = getInput('Unique values: ').getValue();
+    if (unique) {
+        lengthOfArray = maxRangeOfRandom - minRangeOfRandom + 1;
+        arrayOfCells = new Array();
+        for (var i = 0; i < lengthOfArray; i++) {
+            arrayOfCells.push(new Cell(i + minRangeOfRandom));
+        }
+        shuffleCells();
+    } else {
+        lengthOfArray = getInput('Array length: ').getValue();
+        createCells(lengthOfArray);
+    }
+}
+
+function enableMultipleValues(enable) {
+    getInput('Find multiple: ').setValue(false);
+    if (enable) {
+        getInput('Find multiple: ').inputElement.removeAttribute('disabled');
+    } else {
+        getInput('Find multiple: ').inputElement.attribute('disabled', '');
+    }
 }
 
 // resizes cavas on window resize
