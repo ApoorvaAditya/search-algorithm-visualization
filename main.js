@@ -16,6 +16,7 @@ var maxRangeOfRandom = 10; // Inclusive
 var lengthOfArray = 50;
 var framesPerSecond = 10;
 var valueToSearch;
+var currentSearchAlgorithm;
 var arrayOfCells;
 var arrayOfInputs;
 var arrayOfInputData = [{
@@ -51,7 +52,7 @@ var arrayOfInputData = [{
         type: "button"
     },
     {
-        text: "Randomize",
+        text: "Shuffle",
         type: "button"
     },
     {
@@ -61,7 +62,7 @@ var arrayOfInputData = [{
     {
         text: "Find multiple: ",
         type: "checkbox"
-    }/* ,
+    },/*
     {
         text: "Unique values: ",
         type: "checkbox"
@@ -76,25 +77,25 @@ var arrayOfSearchAlgos = ['Linear Search',
 ]
 var arrayOfDescriptions = [{
         text: "Linear Search",
-        description: "Starts from leftmost element and compares each element of the array with the value to find. asdhgkha sdashdohoau we a dhuao da osd a s",
+        description: "Linear search, also known as sequential search, is a process that checks every element in the list sequentially until the desired element is found. The computational complexity for linear search is O(n), making it generally much less efficient than binary search (O(log n)). But when list items can be arranged in order from greatest to least and the probabilities appear as geometric distribution (f (x)=(1-p) x-1p, x=1,2), then linear search can have the potential to be notably faster than binary search.",
         timeComplexity: "O(n)",
         spaceComplexity: "O(1)"
     },
     {
         text: "Binary Search",
-        description: "This is binary search",
+        description: "Binary search is a fast search algorithm with run-time complexity of Ο(log n). This search algorithm works on the principle of divide and conquer. For this algorithm to work properly, the data collection should be in the sorted form. Binary search looks for a particular item by comparing the middle most item of the collection. If a match occurs, then the index of item is returned. If the middle item is greater than the item, then the item is searched in the sub-array to the left of the middle item. Otherwise, the item is searched for in the sub-array to the right of the middle item. This process continues on the sub-array as well until the size of the subarray reduces to zero.",
         timeComplexity: "O(log(n))",
         spaceComplexity: "O()"
     },
     {
         text: "Jump Search",
-        description: "",
+        description: "Like Binary Search, Jump Search is a searching algorithm for sorted arrays. The basic idea is to check fewer elements (than linear search) by jumping ahead by fixed steps or skipping some elements in place of searching all elements",
         timeComplexity: "O()",
         spaceComplexity: "O()"
     },
     {
         text: "Interpolation Search",
-        description: "",
+        description: "The Interpolation Search is an improvement over Binary Search for instances, where the values in a sorted array are uniformly distributed. Binary Search always goes to the middle element to check. On the other hand, interpolation search may go to different locations according to the value of the key being searched. For example, if the value of the key is closer to the last element, interpolation search is likely to start search toward the end side. To find the position to be searched, it uses following formula.",
         timeComplexity: "O()",
         spaceComplexity: "O()"
     },
@@ -113,8 +114,6 @@ var arrayOfDescriptions = [{
 ];
 var isRunning = true;
 var isPaused = true;
-
-// the index linsearch is currently on
 
 //----------------------------------------------------------------------------Classes--------------------------------------------------------------------------------
 
@@ -226,6 +225,10 @@ class TextNInput {
         this.inputElement.value(val);
     }
 
+    setText(text) {
+        this.text = text;
+    }
+
     setPosition(x, y) {
         this.inputElement.position(this.type != "button" ? textWidth(this.text) + x + spacingBtwInputs : x + spacingBtwInputs, y);
     }
@@ -244,23 +247,23 @@ function setup() {
     getInput('Frames per second: ').setValue(10);
     getInput('Minimum random value: ').setValue(0);
     getInput('Maximum random value: ').setValue(10);
-
-    // sets framerate
-    frameRate(60);
+    getInput('Array Length: ').inputElement.input(updateCells);
+    getInput('Minimum random value: ').inputElement.input(recreateCells);
+    getInput('Maximum random value: ').inputElement.input(recreateCells);
+    getInput('Search Algorithm: ').inputElement.input(drawDescription);
+    getInput('Start').inputElement.mousePressed(startSearch);
+    getInput('Pause').inputElement.mousePressed(pause);
+    getInput('Sort').inputElement.mousePressed(sortCells);
+    getInput('Shuffle').inputElement.mousePressed(shuffleCells);
+    getInput('Frames per second: ').inputElement.input(setFramesPerSecond);
+    getInput('Search Algorithm: ').inputElement.input(setSearchAlgo);
+    setSearchAlgo();
+    setValueToSearch();
 }
 
 //runs every frame
 function draw() {
-    getInput('Array Length: ').inputElement.input(updateCells);
-    minRangeOfRandom = getInput('Minimum random value: ').getValue();
-    maxRangeOfRandom = getInput('Maximum random value: ').getValue();
-    getInput('Minimum random value: ').inputElement.input(recreateCells);
-    getInput('Maximum random value: ').inputElement.input(recreateCells);
-    framesPerSecond = getInput('Frames per second: ').getValue();
-    valueToSearch = getInput('Value to search: ').getValue();
-    getInput('Search Algorithm: ').inputElement.input(drawDescription);
-    setFill("white")
-
+    setFill("white");
     //draws background rectangle
     rect(0, 0, width, height);
     //draws the text for the inputs
@@ -273,14 +276,10 @@ function draw() {
             for (var i = 0; i < lengthOfArray; i++) {
                 arrayOfCells[i] = i + minRangeOfRandom;
             }
-            randomizeCells();
+            shuffleCells();
             unique = false
         }
     } */
-    getInput('Start').inputElement.mousePressed(startSearch);
-    getInput('Pause').inputElement.mousePressed(pause);
-    getInput('Sort').inputElement.mousePressed(sortCells);
-    getInput('Randomize').inputElement.mousePressed(randomizeCells);
 
     if (frameCount % (60 / framesPerSecond) == 0) {
         if (!isPaused && isRunning) {
@@ -350,7 +349,7 @@ function getInput(text) {
 
 //-----------------------------------------------------------------------------Cell Functions--------------------------------------------------------------------------------
 
-// create the cell array with the correct positions
+// create the cell array
 function createCells(len) {
     if (minRangeOfRandom != undefined && maxRangeOfRandom != undefined) {
         if (len > 0) {
@@ -359,7 +358,7 @@ function createCells(len) {
 
             for (var i = 0; i < len; i++) {
                 // add the new cell to the cells array
-                number = Math.floor(Math.random() * (+maxRangeOfRandom - +minRangeOfRandom)) + +minRangeOfRandom + 1;
+                number = Math.floor(Math.random() * (maxRangeOfRandom - minRangeOfRandom + 1)) + minRangeOfRandom;
                 arrayOfCells.push(new Cell(number, i));
             }
         }
@@ -367,7 +366,11 @@ function createCells(len) {
 }
 
 function recreateCells() {
-    createCells(lengthOfArray);
+    maxRangeOfRandom = parseInt(getInput('Maximum random value: ').getValue());
+    minRangeOfRandom = parseInt(getInput('Minimum random value: ').getValue());
+    if (minRangeOfRandom <= maxRangeOfRandom) {
+        createCells(lengthOfArray);
+    }
 }
 
 function showCells(len) {
@@ -417,7 +420,7 @@ function sortCells() {
     });
 }
 
-function randomizeCells() {
+function shuffleCells() {
     for (let i = arrayOfCells.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
         [arrayOfCells[i], arrayOfCells[j]] = [arrayOfCells[j], arrayOfCells[i]];
@@ -427,13 +430,14 @@ function randomizeCells() {
 //---------------------------------------------------------------------------Search Algorithms-----------------------------------------------------------------------------
 
 var linSearchCurrIndex, linSearchLen, runLinSearch = false,
-    linSearchStart;
+    linSearchStart, linSearchReachedEnd = false;
 
 function initializeLinearSearch(start, len) {
     linSearchCurrIndex = start;
     linSearchLen = len;
     linSearchStart = start;
     runLinSearch = true;
+    linSearchReachedEnd = false;
 }
 
 function stepLinearSearch() {
@@ -453,13 +457,12 @@ function stepLinearSearch() {
         }
         // increment linSearchCurrIndex
         linSearchCurrIndex++;
-        // make sure it doesn't exceed the array bounds (this is prob unnecessary and therefore linSearchStart too)
-        //linSearchCurrIndex = constrain(linSearchCurrIndex, linSearchStart, linSearchLen + linSearchStart);
 
         if (linSearchCurrIndex == linSearchLen + linSearchStart) {
             runLinSearch = false;
+            linSearchReachedEnd = true;
         }
-    } else if (linSearchCurrIndex == linSearchLen + linSearchStart) {
+    } else if (linSearchReachedEnd) {
         arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
     }
 }
@@ -629,7 +632,12 @@ function stepExponentialSearch() {
     }
 }
 
-var runFibonacciSearch = false, fibonacciSearchStart, fibonacciSearchLen, fibM = 0, fibMMm1 = 1, fibMMm2 = 0, offset = 0, i;
+var runFibonacciSearch = false,
+    fibonacciSearchStart, fibonacciSearchLen, fibM = 0,
+    fibMMm1 = 1,
+    fibMMm2 = 0,
+    offset = 0,
+    i;
 
 function initializeFibonacciSearch(start, len) {
     sortCells();
@@ -656,13 +664,11 @@ function stepFibonacciSearch() {
                 fibMMm1 = fibMMm2
                 fibMMm2 = fibM - fibMMm1;
                 offset = i;
-            }
-            else if (arrayOfCells[i].getNumber() > valueToSearch) {
+            } else if (arrayOfCells[i].getNumber() > valueToSearch) {
                 fibM = fibMMm2;
                 fibMMm1 = fibMMm1 - fibMMm2;
                 fibMMm2 = fibM - fibMMm1;
-            }
-            else {
+            } else {
                 arrayOfCells[i].setIsSearchValue(true);
                 arrayOfCells[i].setIsBeingSearched(false);
                 runFibonacciSearch = false;
@@ -677,7 +683,7 @@ function stepFibonacciSearch() {
 
 function startSearch() {
     resetCells();
-    isPaused = false;
+    if (isPaused) pause();
     switch (getInput("Search Algorithm: ").getValue()) {
         case "Linear Search":
             initializeLinearSearch(0, lengthOfArray);
@@ -702,6 +708,7 @@ function startSearch() {
 
 function pause() {
     isPaused = isPaused ? false : true;
+    getInput('Pause').inputElement.elt.innerHTML = isPaused ? "Unpause" : "Pause";
 }
 
 function setFill(color) {
@@ -739,15 +746,25 @@ function setFill(color) {
 
 function drawDescription() {
     for (var i in arrayOfDescriptions) {
-        if (arrayOfDescriptions[i].text == getInput('Search Algorithm: ').getValue()) {
-            var desc = "Description: " + arrayOfDescriptions[i].description;
-            spacingForDesc = textHeight(desc, width);
+        if (arrayOfDescriptions[i].text == currentSearchAlgorithm) {
             textAlign(LEFT, TOP);
-            text(desc, spacingBtwInputs / 2, spacingForInputs, width - horizontalMargin, spacingForDesc);
+            var widthOfWordDescription = textWidth("Description: ");
+            var desc = arrayOfDescriptions[i].description;
+            spacingForDesc = textHeight(desc, width - widthOfWordDescription) + verticalMargin;
+            textStyle(BOLD);
+            text("Description: ", spacingBtwInputs / 2, spacingForInputs);
+            textStyle(NORMAL);
+            text(desc, spacingBtwInputs + widthOfWordDescription, spacingForInputs, width - widthOfWordDescription - horizontalMargin, spacingForDesc);
             break;
         }
     }
 }
+
+function drawSearchData() {
+    // TODO: Draw the found or not text
+    // TODO: For each algo, display relevant data
+}
+
 
 var fibonacciNumbers = [0, 1];
 
@@ -763,9 +780,8 @@ function fibonacciNumber(n) {
 
 function textHeight(text, maxWidth) {
     var words = text.split(' ');
-    var line = '';
-    var h = textLeading();
-    var testLine = line;
+    var h = 0;
+    var testLine = '';
     for (var i = 0; i < words.length; i++) {
         testLine += words[i] + ' ';
         var testLineWidth = textWidth(testLine);
@@ -774,7 +790,19 @@ function textHeight(text, maxWidth) {
             h += textAscent() + textDescent();
         }
     }
-    return h + textLeading();
+    return h;
+}
+
+function setFramesPerSecond() {
+    framesPerSecond = parseInt(getInput('Frames per second: ').getValue());
+}
+
+function setValueToSearch() {
+    valueToSearch = parseInt(getInput('Value to search: ').getValue());
+}
+
+function setSearchAlgo() {
+    currentSearchAlgorithm = getInput('Search Algorithm: ').getValue();
 }
 
 // resizes cavas on window resize
