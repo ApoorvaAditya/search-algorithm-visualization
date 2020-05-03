@@ -9,6 +9,7 @@ const horizontalMargin = 16;
 const verticalMargin = 20;
 const customFramerate = 5;
 const heightOfInputs = 30;
+const lineHeight = 20;
 var spacingForInputs = 50;
 var spacingForDesc;
 var spacingForInfo;
@@ -757,6 +758,7 @@ function setFill(color) {
 function drawDescription() {
     for (var i in arrayOfDescriptions) {
         if (arrayOfDescriptions[i].text == currentSearchAlgorithm) {
+            //description
             textAlign(LEFT, TOP);
             var widthOfWordDescription = textWidth("Description: ");
             var desc = arrayOfDescriptions[i].description;
@@ -765,6 +767,15 @@ function drawDescription() {
             text("Description: ", spacingBtwInputs / 2, spacingForInputs);
             textStyle(NORMAL);
             text(desc, spacingBtwInputs + widthOfWordDescription, spacingForInputs, width - widthOfWordDescription - horizontalMargin, spacingForDesc);
+            // timecomplexity
+            var widthOfWordTimeComplexity = textWidth("Time Complexity: ");
+            var timeComplexity = arrayOfDescriptions[i].timeComplexity;
+            textStyle(BOLD);
+            text("Time Complexity: ", spacingBtwInputs / 2, spacingForDesc + spacingForInputs);
+            textStyle(NORMAL);
+            text(timeComplexity, spacingBtwInputs + widthOfWordTimeComplexity, spacingForDesc + spacingForInputs);
+            textAlign(LEFT, TOP);
+            spacingForDesc += lineHeight;
             break;
         }
     }
@@ -820,7 +831,7 @@ function textHeight(text, maxWidth) {
     for (var i = 0; i < words.length; i++) {
         testLine += words[i] + ' ';
         var testLineWidth = textWidth(testLine);
-        if (testLineWidth > maxWidth && i > 0) {
+        if (testLineWidth > maxWidth && i >= 0) {
             testLine = words[i] + ' ';
             h += textAscent() + textDescent();
         }
