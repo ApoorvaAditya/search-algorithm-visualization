@@ -2,7 +2,6 @@ const cellWidth = 50;
 const spacingBtwCells = 20;
 const spacingBtwCellAndIndex = 20;
 const indexTextSize = 14;
-const spacingBtwTopAndInputs = 20;
 const widthOfNumberInput = 30;
 const spacingBtwInputs = 20;
 const horizontalMargin = 16;
@@ -11,6 +10,9 @@ const customFramerate = 5;
 const heightOfInputs = 30;
 const lineHeight = 20;
 const spaceForBottomLink = 20;
+var descFile;
+var spacingBtwTopAndInputs = 20;
+var topOfCanvas;
 var currentIndex = 0;
 var comparisonCount = 0;
 var spacingForInputs = 50;
@@ -66,11 +68,11 @@ var arrayOfInputData = [{
         type: "button"
     },
     {
-        text: "Find multiple: ",
-        type: "checkbox"
+        text: "Unique values",
+        type: "button"
     },
     {
-        text: "Unique values: ",
+        text: "Find multiple: ",
         type: "checkbox"
     }
 ];
@@ -83,37 +85,45 @@ var arrayOfSearchAlgos = ['Linear Search',
 ]
 var arrayOfDescriptions = [{
         text: "Linear Search",
-        description: "Linear search, also known as sequential search, is a process that checks every element in the list sequentially until the desired element is found. The computational complexity for linear search is O(n), making it generally much less efficient than binary search (O(log n)). But when list items can be arranged in order from greatest to least and the probabilities appear as geometric distribution (f (x)=(1-p) x-1p, x=1,2), then linear search can have the potential to be notably faster than binary search.",
+        description: `Linear search, also known as sequential search, is a process that checks every element in the list sequentially until the desired element is found.`,
         timeComplexity: "O(n)"
     },
     {
         text: "Binary Search",
-        description: "Binary search is a fast search algorithm with run-time complexity of Ο(log n). This search algorithm works on the principle of divide and conquer. For this algorithm to work properly, the data collection should be in the sorted form. Binary search looks for a particular item by comparing the middle most item of the collection. If a match occurs, then the index of item is returned. If the middle item is greater than the item, then the item is searched in the sub-array to the left of the middle item. Otherwise, the item is searched for in the sub-array to the right of the middle item. This process continues on the sub-array as well until the size of the subarray reduces to zero.",
+        description: `Binary search is a fast search algorithm which works on the principle of divide and conquer. For this algorithm to work properly, the data collection should be in the sorted form. Binary search looks for a particular item by comparing the middle most item of the collection. If a match occurs, then the index of item is returned. If the middle item is greater than the item, then the item is searched in the sub-array to the left of the middle item. Otherwise, the item is searched for in the sub-array to the right of the middle item. This process continues on the sub-array as well until the size of the subarray reduces to zero.`,
         timeComplexity: "O(log(n))"
     },
     {
         text: "Jump Search",
-        description: "Like Binary Search, Jump Search is a searching algorithm for sorted arrays. The basic idea is to check fewer elements (than linear search) by jumping ahead by fixed steps or skipping some elements in place of searching all elements",
+        description: `Jump Search is a searching algorithm for sorted arrays. The basic idea is to check fewer elements (than linear search) by jumping ahead by fixed steps or skipping some elements in place of searching all elements. For example, suppose we have an array arr[] of size n and block (to be jumped) size m. Then we search at the indexes arr[0], arr[m], arr[2m]…..arr[km] and so on. Once we find the interval (arr[km] < x < arr[(k+1)m]), we perform a linear search operation from the index km to find the element x. The optimal block size to be skipped is square root of n.`,
         timeComplexity: "O(√n)"
     },
     {
         text: "Interpolation Search",
-        description: "The Interpolation Search is an improvement over Binary Search for instances, where the values in a sorted array are uniformly distributed. Binary Search always goes to the middle element to check. On the other hand, interpolation search may go to different locations according to the value of the key being searched. For example, if the value of the key is closer to the last element, interpolation search is likely to start search toward the end side. To find the position to be searched, it uses following formula.",
+        description: `The Interpolation Search is an improvement over Binary Search for instances, where the values in a sorted array are uniformly distributed. Binary Search always goes to the middle element to check. On the other hand, interpolation search may go to different locations according to the value of the key being searched. For example, if the value of the key is closer to the last element, interpolation search is likely to start search toward the end side. 
+To find the position to be searched, it uses following formula:
+        pos = lo + [ ( x - arr[lo] ) * ( hi - lo ) / ( arr[hi] - arr[lo] ) ]
+where,
+arr[] : Array where elements need to be searched
+x  : Element to be searched
+lo : Starting index in arr[]
+hi : Ending index in arr[]`,
         timeComplexity: "O(log(log(n))) to O(n)"
     },
     {
         text: "Exponential Search",
-        description: "",
+        description: `The idea is to start with subarray size 1, compare its last element with x, then try size 2, then 4 and so on until last element of a subarray is not greater. Once we find an index i (after repeated doubling of i), we know that the element must be present between i/2 and i because we could not find a greater value in previous iteration.`,
         timeComplexity: "O(log(n))"
     },
     {
         text: "Fibonacci Search",
-        description: "",
+        description: `Let the element to find be x. The idea is to first find the smallest Fibonacci number that is greater than or equal to the length of given array. Let the found Fibonacci number be fib (m’th Fibonacci number). We use (m-2)’th Fibonacci number as the index (If it is a valid index). Let (m-2)’th Fibonacci Number be i, we compare arr[i] with x, if x is same, we return i. Else if x is greater, we recur for subarray after i, else we recur for subarray before i.`,
         timeComplexity: "O(log(n))"
     },
 ];
 var isRunning = true;
 var isPaused = true;
+var footerDiv;
 
 //----------------------------------------------------------------------------Classes--------------------------------------------------------------------------------
 
@@ -224,9 +234,8 @@ class TextNInput {
     setValue(val) {
         if (this.type != "checkbox") {
             this.inputElement.value(val);
-        }
-        else  {
-            this.inputElement.checked(val)  ;
+        } else {
+            this.inputElement.checked(val);
         }
     }
 
@@ -244,7 +253,9 @@ class TextNInput {
 // runs once before draw loop
 function setup() {
     //create the canvas of the size of browser window + some margins
-    createCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - spaceForBottomLink);
+    var canvas = createCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - spaceForBottomLink);
+    topOfCanvas = canvas.position().y + 20;
+    resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - topOfCanvas);
     // create the inputs
     createInputs();
     // create the cells array
@@ -262,11 +273,17 @@ function setup() {
     getInput('Shuffle').inputElement.mousePressed(shuffleCells);
     getInput('Frames per second: ').inputElement.input(setFramesPerSecond);
     getInput('Search Algorithm: ').inputElement.input(setSearchAlgo);
-    getInput('Unique values: ').inputElement.input(setUnique);
+    getInput('Unique values').inputElement.mousePressed(setUnique);
     getInput('Value to search: ').inputElement.input(setValueToSearch);
     setSearchAlgo();
     setValueToSearch();
-    createA("https://github.com/ApoorvaAditya/search-visualizer", "Source code available on GitHub", "_blank");
+    footerDiv = createDiv("").size(width);
+    footerDiv.child(createA("https://github.com/ApoorvaAditya/search-visualizer", "Source code available on GitHub", "_blank"));
+    var span = createSpan("")
+    span.style('margin-left', '50px');
+    footerDiv.child(span);
+    footerDiv.child(createA("https://www.geeksforgeeks.org/searching-algorithms/", "More info at GeeksForGeeks", "_blank"));
+    footerDiv.style('text-align', 'center');
     arrayOfFoundIndex = new Array();
 }
 
@@ -325,7 +342,7 @@ function createInputs() {
 
 function drawInputs() {
     var cursor = spacingBtwInputs / 2;
-    var y = spacingBtwTopAndInputs;
+    var y = spacingBtwTopAndInputs; // + topOfCanvas;
     setFill("black");
     for (var i in arrayOfInputs) {
         if (cursor + arrayOfInputs[i].getWidth() > width) {
@@ -333,7 +350,7 @@ function drawInputs() {
             y += heightOfInputs;
         }
         arrayOfInputs[i].drawText(cursor, y);
-        arrayOfInputs[i].setPosition(cursor, y);
+        arrayOfInputs[i].setPosition(cursor - 10, y + topOfCanvas - 28);
         cursor += arrayOfInputs[i].getWidth();
     }
     spacingForInputs = y + heightOfInputs;
@@ -473,7 +490,7 @@ function stepLinearSearch() {
             runLinSearch = false;
             linSearchReachedEnd = true;
         }
-    } else if (linSearchReachedEnd) {
+    } else if (linSearchReachedEnd && linSearchCurrIndex - 1 < linSearchLen + linSearchStart) {
         arrayOfCells[linSearchCurrIndex - 1].setIsBeingSearched(false);
     }
 }
@@ -540,7 +557,7 @@ function stepJumpSearch() {
         if (arrayOfCells[jumpSearchCurrIndex].getNumber() < valueToSearch) {
             jumpSearchCurrIndex += jumpSearchStep;
             comparisonCount++;
-            
+
         } else {
             initializeLinearSearch(jumpSearchCurrIndex - jumpSearchStep, jumpSearchLen);
             runJumpSearch = false;
@@ -586,7 +603,7 @@ function stepInterpolationSearch() {
             if (pos < interpolationSearchStart + interpolationSearchLen) {
                 arrayOfCells[pos].setIsBeingSearched(true);
                 comparisonCount++;
-                
+
                 arrayOfCells[interpolationSearchHigh].setIsLowOrHigh(true);
                 arrayOfCells[interpolationSearchLow].setIsLowOrHigh(true);
                 prevInterpolationSearchHigh = interpolationSearchHigh;
@@ -645,7 +662,7 @@ function stepExponentialSearch() {
             runExponentialSearch = false;
         }
         comparisonCount++;
-        
+
     } else {
         stepBinarySearch();
     }
@@ -805,26 +822,27 @@ function drawSearchData() {
     textAlign(LEFT, TOP);
     textStyle(BOLD);
     text("Comparions: " + comparisonCount.toString(), spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width, spacingForDesc + lineHeight);
-    //current index
-    textAlign(CENTER, TOP);
-    text("Current Index: " + currentIndex ,spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width, spacingForDesc + lineHeight);
-    // current value
-    textAlign(RIGHT, TOP);
-    text("Current Value: " + arrayOfCells[currentIndex].getNumber(), spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight)
-    spacingForDesc += lineHeight;
-
+    if (currentIndex != undefined && lengthOfArray > 0) {
+        //current index
+        textAlign(CENTER, TOP);
+        text("Current Index: " + currentIndex, spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width, spacingForDesc + lineHeight);
+        // current value
+        textAlign(RIGHT, TOP);
+        text("Current Value: " + arrayOfCells[currentIndex].getNumber(), spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight)
+        spacingForDesc += lineHeight;
+    }
     textAlign(CENTER, TOP);
     switch (currentSearchAlgorithm) {
         case "Linear Search":
             break;
         case "Binary Search":
-            if (binarySearchLow != undefined && binarySearchHigh != undefined){
+            if (binarySearchLow != undefined && binarySearchHigh != undefined) {
                 text("Low: " + binarySearchLow + " | High: " + binarySearchHigh, spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight);
             }
             break;
         case "Jump Search":
             // it is jumpsearchstep ahead of the animation
-            if (jumpSearchCurrIndex != undefined && jumpSearchStep != undefined && jumpSearchCurrIndex - jumpSearchStep >= jumpSearchStart){
+            if (jumpSearchCurrIndex != undefined && jumpSearchStep != undefined && jumpSearchCurrIndex - jumpSearchStep >= jumpSearchStart) {
                 text("Step Size: " + jumpSearchStep.toString() + " | Low: " + (jumpSearchCurrIndex - jumpSearchStep).toString() + " | High: " + jumpSearchCurrIndex.toString(), spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight);
             }
             break;
@@ -837,10 +855,9 @@ function drawSearchData() {
 
             break;
         case "Exponential Search":
-            if (prevExponentialSearchLow != undefined && prevExponentialSearchHigh != undefined && runExponentialSearch){
+            if (prevExponentialSearchLow != undefined && prevExponentialSearchHigh != undefined && runExponentialSearch) {
                 text("Low: " + prevExponentialSearchLow + " | High: " + prevExponentialSearchHigh, spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight);
-            }
-            else if  (!runExponentialSearch && runBinarySearch) {
+            } else if (!runExponentialSearch && runBinarySearch) {
                 expoText = "Low: " + binarySearchLow + " | High: " + binarySearchHigh;
             }
             if (binarySearchHigh != undefined && binarySearchLow != undefined) {
@@ -848,8 +865,8 @@ function drawSearchData() {
             }
             break;
         case "Fibonacci Search":
-        // what is this?? nani
-            if (fibM != undefined && fibMMm1 != undefined && fibMMm2){
+            // what is this?? nani
+            if (fibM != undefined && fibMMm1 != undefined && fibMMm2) {
                 var fibText = "mᵗʰ Fibonacci: " + fibM.toString() + " | (m - 1)ᵗʰ Fibonacci: " + fibMMm1.toString() + " | (m-2)ᵗʰ Fibonacci: " + fibMMm2.toString();
                 text(fibText, spacingBtwInputs / 2, spacingForDesc + spacingForInputs, width - horizontalMargin, lineHeight);
             }
@@ -897,14 +914,19 @@ function textHeight(text, maxWidth) {
     var h = 0;
     var testLine = '';
     for (var i = 0; i < words.length; i++) {
-        testLine += words[i] + ' ';
-        var testLineWidth = textWidth(testLine);
-        if (testLineWidth > maxWidth && i >= 0) {
+        if (!words[i].includes("\n")) {
+            testLine += words[i] + ' ';
+            var testLineWidth = textWidth(testLine);
+            if (testLineWidth > maxWidth && i >= 0) {
+                testLine = words[i] + ' ';
+                h += textAscent() + textDescent();
+            }
+        } else {
             testLine = words[i] + ' ';
             h += textAscent() + textDescent();
         }
     }
-    return h;
+    return h + lineHeight / 2;
 }
 
 function setFramesPerSecond() {
@@ -916,32 +938,24 @@ function setValueToSearch() {
     valueToSearch = parseInt(getInput('Value to search: ').getValue());
 }
 
-var multipleValuesAvailable = ["Linear Search",]
+var multipleValuesAvailable = ["Linear Search", ]
 
 function setSearchAlgo() {
     currentSearchAlgorithm = getInput('Search Algorithm: ').getValue();
     if (multipleValuesAvailable.includes(currentSearchAlgorithm)) {
         enableMultipleValues(true);
-    }
-    else {
+    } else {
         enableMultipleValues(false);
     }
 }
 
 function setUnique() {
-    resetCells();
-    var unique = getInput('Unique values: ').getValue();
-    if (unique) {
-        lengthOfArray = maxRangeOfRandom - minRangeOfRandom + 1;
+    lengthOfArray = maxRangeOfRandom - minRangeOfRandom + 1;
         arrayOfCells = new Array();
         for (var i = 0; i < lengthOfArray; i++) {
             arrayOfCells.push(new Cell(i + minRangeOfRandom));
         }
         shuffleCells();
-    } else {
-        lengthOfArray = getInput('Array length: ').getValue();
-        createCells(lengthOfArray);
-    }
 }
 
 function enableMultipleValues(enable) {
@@ -953,9 +967,7 @@ function enableMultipleValues(enable) {
     }
 }
 
-// resizes cavas on window resize
-window.onresize = function () {
-    resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin);
-};
-
-//"pos = low + [ (valueToSearch - array[low] * (high - low) / (array[high] - arra[low] ) ]"
+function windowResized() {
+    resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - topOfCanvas);
+    footerDiv.size(width);
+}
