@@ -122,7 +122,7 @@ hi : Ending index in arr[]
         timeComplexity: 'O(log(n))'
     },
 ];
-var multipleValuesAvailable = ['Linear Search'];
+var multipleValuesAvailable = ['Linear Search', 'Jump Search'];
 var isPaused = true;
 var footerDiv;
 
@@ -173,8 +173,8 @@ class TextNInput {
                 break;
             case 'dropdown':
                 this.inputElement = createSelect();
-                for (var i in arrayOfSearchAlgos)
-                    this.inputElement.option(arrayOfSearchAlgos[i]);
+                for (let searchAlgo of arrayOfSearchAlgos)
+                    this.inputElement.option(searchAlgo);
                 break;
             case 'button':
                 this.inputElement = createButton(this.text);
@@ -226,15 +226,17 @@ class TextNInput {
 function setup() {
     //create the canvas of the size of browser window + some margins
     var canvas = createCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - spaceForBottomLink);
-    topOfCanvas = canvas.position().y + 20;
+    topOfCanvas = canvas.position().y + spacingBtwTopAndInputs;
     resizeCanvas(window.innerWidth - horizontalMargin, window.innerHeight - verticalMargin - topOfCanvas);
+    defaultHeight = height;
 
     createInputs();
     createCells(lengthOfArray);
-    defaultHeight = height;
     createFooter();
+
     setSearchAlgo();
     setValueToSearch();
+    setFramesPerSecond();
 }
 
 function draw() {
@@ -273,7 +275,7 @@ function draw() {
 
 // creates the inputs
 function createInputs() {
-    for (var i in arrayOfInputData) {
+    for (let i in arrayOfInputData) {
         arrayOfInputs.push(new TextNInput(arrayOfInputData[i].text, arrayOfInputData[i].type));
         arrayOfInputs[i].create();
     }
@@ -299,21 +301,20 @@ function drawInputs() {
     var inputHorizontalCursor = spacingBtwInputs / 2;
     currentVerticalPosition = spacingBtwTopAndInputs;
     setFill('black');
-    for (var i in arrayOfInputs) {
-        if (inputHorizontalCursor + arrayOfInputs[i].getWidth() > width) {
+    for (let textNInput of arrayOfInputs) {
+        if (inputHorizontalCursor + textNInput.getWidth() > width) {
             inputHorizontalCursor = spacingBtwInputs / 2;
             currentVerticalPosition += inputHeight;
         }
-        arrayOfInputs[i].drawText(inputHorizontalCursor, currentVerticalPosition);
-        // TODO: make constants or something else
-        arrayOfInputs[i].setPosition(inputHorizontalCursor - 10, currentVerticalPosition + topOfCanvas - 28);
-        inputHorizontalCursor += arrayOfInputs[i].getWidth();
+        textNInput.drawText(inputHorizontalCursor, currentVerticalPosition);
+        textNInput.setPosition(inputHorizontalCursor, currentVerticalPosition + topOfCanvas - 28);
+        inputHorizontalCursor += textNInput.getWidth();
     }
     currentVerticalPosition += inputHeight;
 }
 
 function getInput(text) {
-    for (var i in arrayOfInputs)
+    for (let i in arrayOfInputs)
         if (arrayOfInputData[i].text == text) return arrayOfInputs[i];
 }
 
@@ -323,8 +324,8 @@ function getInput(text) {
 function createCells(len) {
     if (minRangeOfRandom != undefined && maxRangeOfRandom != undefined && len > 0) {
         arrayOfCells = new Array();
-        for (var i = 0; i < len; i++) {
-            number = Math.floor(Math.random() * (maxRangeOfRandom - minRangeOfRandom + 1)) + minRangeOfRandom;
+        for (let i = 0; i < len; i++) {
+            const number = Math.floor(Math.random() * (maxRangeOfRandom - minRangeOfRandom + 1)) + minRangeOfRandom;
             arrayOfCells.push(new Cell(number));
         }
     }
@@ -345,7 +346,7 @@ function showCells(len) {
         // Start position so that the cells are aligned to center (first row)
         startX = (width - n * cellSideLength - (n - 1) * spacingBtwCells) / 2;
         var startHeight = currentVerticalPosition;
-        for (var i = 0; i < len; i++) {
+        for (let i = 0; i < len; i++) {
             // xpos of the cell
             x = startX + (i % maxNum) * (spacingBtwCells + cellSideLength);
             // no. of row currently on
@@ -374,7 +375,7 @@ function resetCells() {
     runInterpolationSearch = false;
     runExponential = false;
     runFibonacciSearch = false;
-    for (var i in arrayOfCells) {
+    for (let i in arrayOfCells) {
         setIsBeingSearched(i, false);
         setIsLowOrHigh(i, false);
         setIsSearchValue(i, false);
@@ -447,11 +448,12 @@ function initBinary(start, len) {
 }
 
 function stepBinary() {
-    if (runBinary && binaryLow < binaryHigh) {
+    if (runBinary && binaryLow <= binaryHigh) {
         setIsLowOrHigh(prevBinaryLow, false);
         setIsLowOrHigh(prevBinaryHigh, false);
         if (binaryMid != undefined) setIsBeingSearched(binaryMid, false);
         binaryMid = int((binaryLow + binaryHigh) / 2);
+        print(binaryMid);
         setIsLowOrHigh(binaryLow, true);
         setIsLowOrHigh(binaryHigh, true);
         setIsBeingSearched(binaryMid, true);
@@ -523,7 +525,7 @@ function stepInterpolation() {
         setIsLowOrHigh(prevInterpolationHigh, false);
         setIsLowOrHigh(prevInterpolationLow, false);
         if (interpolationPos != undefined && interpolationPos < interpolationStart + interpolationLen)
-            setIsBeingSearched(interpolationPosfalse);
+            setIsBeingSearched(interpolationPos, false);
 
         if (getNumber(interpolationHigh) != getNumber(interpolationLow)) {
             interpolationPos = int(interpolationLow + ((valueToFind - getNumber(interpolationLow)) * (interpolationHigh - interpolationLow) / (getNumber(interpolationHigh) - getNumber(interpolationLow))))
@@ -580,7 +582,7 @@ function stepExponential() {
             else
                 exponentialHigh = exponentialStart + exponentialLen - 1;
         } else {
-            initBinary(exponentialLow, exponentialHigh - exponentialLow);
+            initBinary(exponentialLow, exponentialHigh - exponentialLow + 1);
             runExponential = false;
         }
         comparisonCount++;
@@ -702,19 +704,19 @@ function setFill(color) {
 
 
 function drawDescription() {
-    for (var i in arrayOfDescriptions) {
-        if (arrayOfDescriptions[i].text == currentSearchAlgo) {
+    for (let currDesc of arrayOfDescriptions) {
+        if (currDesc.text == currentSearchAlgo) {
             //description
             textAlign(LEFT);
-            var widthOfWordDescription = textWidth('Description: ');
-            var desc = arrayOfDescriptions[i].description;
+            const widthOfWordDescription = textWidth('Description: ');
+            const desc = currDesc.description;
             textStyle(BOLD);
             text('Description: ', spacingBtwInputs / 2, currentVerticalPosition);
             textStyle(NORMAL);
             text(desc, spacingBtwInputs + widthOfWordDescription, currentVerticalPosition, width - widthOfWordDescription - horizontalMargin);
             // timecomplexity
-            var widthOfWordTimeComplexity = textWidth('Time Complexity: ');
-            var timeComplexity = arrayOfDescriptions[i].timeComplexity;
+            const widthOfWordTimeComplexity = textWidth('Time Complexity: ');
+            const timeComplexity = currDesc.timeComplexity;
             textStyle(BOLD);
             currentVerticalPosition += textHeight(desc, width - widthOfWordDescription) + verticalMargin;
             text('Time Complexity: ', spacingBtwInputs / 2, currentVerticalPosition);
@@ -745,30 +747,29 @@ function drawSearchData() {
     switch (currentSearchAlgo) {
         case 'Binary Search':
             if (binaryLow != undefined && binaryHigh != undefined)
-                text('Low: ' + binaryLow + ' | High: ' + binaryHigh, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+                drawInfoText('Low: ' + binaryLow.toString() + ' | High: ' + binaryHigh.toString());
             break;
         case 'Jump Search':
             // it is jumpsearchstep ahead of the animation
             if (jumpCurrIndex != undefined && jumpStep != undefined && jumpCurrIndex - jumpStep >= jumpSearchStart)
-                text('Step Size: ' + jumpStep.toString() + ' | Low: ' + (jumpCurrIndex - jumpStep).toString() + ' | High: ' + jumpCurrIndex.toString(), spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+                drawInfoText('Step Size: ' + jumpStep.toString() + ' | Low: ' + (jumpCurrIndex - jumpStep).toString() + ' | High: ' + jumpCurrIndex.toString());
             break;
         case 'Interpolation Search':
             // it is also ahead of the animation
             if (interpolationLow != undefined && interpolationHigh != undefined)
-                text('Low: ' + interpolationLow.toString() + ' | High: ' + interpolationHigh.toString(), spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+                drawInfoText('Low: ' + interpolationLow.toString() + ' | High: ' + interpolationHigh.toString());
             break;
         case 'Exponential Search':
             if (prevExponentialLow != undefined && prevExponentialHigh != undefined && runExponential)
-                text('Low: ' + prevExponentialLow + ' | High: ' + prevExponentialHigh, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+                drawInfoText('Low: ' + prevExponentialLow.toString() + ' | High: ' + prevExponentialHigh.toString());
 
-            if (binaryHigh != undefined && binaryLow != undefined)
-                text('Low: ' + binaryLow + ' | High: ' + binaryHigh, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+            else if (binaryHigh != undefined && binaryLow != undefined)
+                drawInfoText('Low: ' + binaryLow.toString() + ' | High: ' + binaryHigh.toString());
             break;
         case 'Fibonacci Search':
             // TODO: what is this?? nani
-            if (fibM != undefined && fibMMm1 != undefined && fibMMm2) {
-                var fibText = 'mᵗʰ Fibonacci: ' + fibM.toString() + ' | (m - 1)ᵗʰ Fibonacci: ' + fibMMm1.toString() + ' | (m-2)ᵗʰ Fibonacci: ' + fibMMm2.toString();
-                text(fibText, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
+            if (fibM != undefined && fibMMm1 != undefined && fibMMm2 != undefined) {
+                drawInfoText('mᵗʰ Fibonacci: ' + fibM.toString() + ' | (m - 1)ᵗʰ Fibonacci: ' + fibMMm1.toString() + ' | (m-2)ᵗʰ Fibonacci: ' + fibMMm2.toString());
             }
             break;
     }
@@ -778,17 +779,17 @@ function drawSearchData() {
     if (arrayOfFoundIndex != undefined) {
         textAlign(CENTER);
         textStyle(BOLD);
-        var foundText;
+        let foundText;
         if (arrayOfFoundIndex.length > 0) {
             setFill('dark green');
             foundText = 'Found at index(es): ';
-            for (var i = 0, len = arrayOfFoundIndex.length; i < len; i++)
+            for (let i in arrayOfFoundIndex)
                 foundText += i != arrayOfFoundIndex.length - 1 ? arrayOfFoundIndex[i].toString() + ', ' : arrayOfFoundIndex[i].toString();
         } else {
             setFill('red');
             foundText = 'Not Found';
         }
-        var heightOfFoundText = textHeight(foundText, width);
+        const heightOfFoundText = textHeight(foundText, width);
         text(foundText, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, heightOfFoundText + 14);
         currentVerticalPosition += heightOfFoundText;
     }
@@ -812,19 +813,19 @@ function fibonacciNumber(n) {
 }
 
 function textHeight(text, maxWidth) {
-    var words = text.split(' ');
-    var h = 0;
-    var testLine = '';
-    for (var i = 0, len = words.length; i < len; i++) {
-        if (!words[i].includes('\n')) {
-            testLine += words[i] + ' ';
-            var testLineWidth = textWidth(testLine);
-            if (testLineWidth > maxWidth && i >= 0) {
-                testLine = words[i] + ' ';
+    let words = text.split(' ');
+    let h = 0;
+    let testLine = '';
+    for (let word of words) {
+        if (!word.includes('\n')) {
+            testLine += word + ' ';
+            const testLineWidth = textWidth(testLine);
+            if (testLineWidth > maxWidth) {
+                testLine = word + ' ';
                 h += textAscent() + textDescent();
             }
         } else {
-            testLine = words[i] + ' ';
+            testLine = word + ' ';
             h += textAscent() + textDescent();
         }
     }
@@ -848,7 +849,7 @@ function setSearchAlgo() {
 function setUnique() {
     lengthOfArray = maxRangeOfRandom - minRangeOfRandom + 1;
     arrayOfCells = new Array();
-    for (var i = 0; i < lengthOfArray; i++)
+    for (let i = 0; i < lengthOfArray; i++)
         arrayOfCells.push(new Cell(i + minRangeOfRandom));
     shuffleCells();
 }
@@ -878,6 +879,10 @@ function setHasBeenVisited(index, val) {
 
 function getNumber(index) {
     return arrayOfCells[index].number;
+}
+
+function drawInfoText(textToDisplay) {
+    text(textToDisplay, spacingBtwInputs / 2, currentVerticalPosition, width - horizontalMargin, lineHeight);
 }
 
 function createFooter() {
