@@ -11,7 +11,7 @@ const verticalMargin = 20;
 const inputHeight = 30;
 const lineHeight = 20;
 const spaceForBottomLink = 10;
-const defTextSize = 16;
+const defTextSize = 15;
 var defaultHeight;
 
 // Variables
@@ -593,7 +593,7 @@ function stepExponential() {
     else stepBinary();
 }
 
-var fibonacciStart, fibonacciLen, fibM = 0, fibMMm1 = 1, fibMMm2 = 0, offset = 0, fibi, runFibonacciSearch = false;
+var fibonacciStart, fibonacciLen, fibM = 0, fibMMm1 = 1, fibMMm2 = 0, offset = 0, fibi, prevFibi, runFibonacciSearch = false;
 
 function initFibonacci(start, len) {
     sortCells();
@@ -611,8 +611,10 @@ function stepFibonacci() {
     if (runFibonacciSearch) {
         if (fibM > 1) {
             setIsLowOrHigh(fibi, false);
+            setIsBeingSearched(prevFibi, false);
             fibi = Math.min(offset + fibMMm2, fibonacciLen - 1);
             setIsBeingSearched(fibi, true);
+            prevFibi = fibi;
             currentIndex = fibi;
             if (getNumber(fibi) < valueToFind) {
                 fibM = fibMMm1;
@@ -850,6 +852,7 @@ function setSearchAlgo() {
 }
 
 function setUnique() {
+    resetCells();
     lengthOfArray = maxRangeOfRandom - minRangeOfRandom + 1;
     arrayOfCells = new Array();
     for (let i = 0; i < lengthOfArray; i++)
@@ -863,9 +866,7 @@ function enableMultipleValues(enable) {
 }
 
 function setIsLowOrHigh(index, val) {
-    if (index != undefined) {
-        arrayOfCells[index].isLowOrHigh = val;
-    }
+    if (index != undefined) arrayOfCells[index].isLowOrHigh = val;
 }
 
 function setIsSearchValue(index, val) {
@@ -873,7 +874,7 @@ function setIsSearchValue(index, val) {
 }
 
 function setIsBeingSearched(index, val) {
-    arrayOfCells[index].isBeingSearched = val;
+    if (index != undefined) arrayOfCells[index].isBeingSearched = val;
 }
 
 function setHasBeenVisited(index, val) {
