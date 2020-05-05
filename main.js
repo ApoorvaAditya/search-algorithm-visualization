@@ -11,6 +11,7 @@ const verticalMargin = 20;
 const inputHeight = 30;
 const lineHeight = 20;
 const spaceForBottomLink = 10;
+const defTextSize = 16;
 var defaultHeight;
 
 // Variables
@@ -243,6 +244,8 @@ function draw() {
     //draws background rectangle
     setFill('white');
     rect(0, 0, width, height);
+
+    textSize(defTextSize);
     drawInputs();
     drawDescription();
     drawSearchData();
