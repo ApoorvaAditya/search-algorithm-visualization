@@ -1,2 +1,2 @@
-# Search Algorithm Visualizer
+# Search Algorithm Visualization
 I made this visualization to help beginner and intermediate programmers to learn about the different search algorithms and situations where each one is optimal/appropriate. I also didn't know about most of these apart from linear search and binary search and that's probably the case for most new programmers. If there is a mistake in my implementation or if you can improve my code or add more features, please feel free to do so. I've tried to eliminate as many bugs I can but if a few have slipped through, please let me know. 
