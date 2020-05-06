@@ -870,7 +870,7 @@ function setIsLowOrHigh(index, val) {
 }
 
 function setIsSearchValue(index, val) {
-    arrayOfCells[index].isSearchValue = val;
+    if (index != undefined) arrayOfCells[index].isSearchValue = val;
 }
 
 function setIsBeingSearched(index, val) {
@@ -878,7 +878,7 @@ function setIsBeingSearched(index, val) {
 }
 
 function setHasBeenVisited(index, val) {
-    arrayOfCells[index].hasBeenVisited = val;
+    if (index != undefined) arrayOfCells[index].hasBeenVisited = val;
 }
 
 function getNumber(index) {
