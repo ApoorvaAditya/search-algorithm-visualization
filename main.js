@@ -29,100 +29,9 @@ var currentSearchAlgo;
 var arrayOfFoundIndex = new Array();
 var arrayOfCells;
 var arrayOfInputs = new Array();
-var arrayOfInputData = [{
-        text: 'Search Algorithm: ',
-        type: 'dropdown'
-    },
-    {
-        text: 'Array length: ',
-        type: 'number'
-    },
-    {
-        text: 'Value to find: ',
-        type: 'number'
-    },
-    {
-        text: 'Frames per second: ',
-        type: 'number'
-    },
-    {
-        text: 'Minimum random value: ',
-        type: 'number'
-    },
-    {
-        text: 'Maximum random value: ',
-        type: 'number'
-    },
-    {
-        text: 'Start',
-        type: 'button'
-    },
-    {
-        text: 'Pause',
-        type: 'button'
-    },
-    {
-        text: 'Shuffle',
-        type: 'button'
-    },
-    {
-        text: 'Sort',
-        type: 'button'
-    },
-    {
-        text: 'Unique values',
-        type: 'button'
-    },
-    {
-        text: 'Find multiple: ',
-        type: 'checkbox'
-    }
-];
-var arrayOfSearchAlgos = ['Linear Search',
-    'Binary Search',
-    'Jump Search',
-    'Interpolation Search',
-    'Exponential Search',
-    'Fibonacci Search'
-]
-var arrayOfDescriptions = [{
-        text: 'Linear Search',
-        description: `Linear search, also known as sequential search, is a process that checks every element in the list sequentially until the desired element is found.`,
-        timeComplexity: 'O(n)'
-    },
-    {
-        text: 'Binary Search',
-        description: `Binary search is a fast search algorithm which works on the principle of divide and conquer. For this algorithm to work properly, the data collection should be in the sorted form. Binary search looks for a particular item by comparing the middle most item of the collection. If a match occurs, then the index of item is returned. If the middle item is greater than the item, then the item is searched in the sub-array to the left of the middle item. Otherwise, the item is searched for in the sub-array to the right of the middle item. This process continues on the sub-array as well until the size of the subarray reduces to zero.`,
-        timeComplexity: 'O(log(n))'
-    },
-    {
-        text: 'Jump Search',
-        description: `Jump Search is a searching algorithm for sorted arrays. The basic idea is to check fewer elements (than linear search) by jumping ahead by fixed steps or skipping some elements in place of searching all elements. For example, suppose we have an array arr[] of size n and block (to be jumped) size m. Then we search at the indexes arr[0], arr[m], arr[2m]…..arr[km] and so on. Once we find the interval (arr[km] < x < arr[(k+1)m]), we perform a linear search operation from the index km to find the element x. The optimal block size to be skipped is square root of n.`,
-        timeComplexity: 'O(√n)'
-    },
-    {
-        text: 'Interpolation Search',
-        description: `The Interpolation Search is an improvement over Binary Search for instances, where the values in a sorted array are uniformly distributed. Binary Search always goes to the middle element to check. On the other hand, interpolation search may go to different locations according to the value of the key being searched. For example, if the value of the key is closer to the last element, interpolation search is likely to start search toward the end side. To find the position to be searched, it uses following formula:
-        pos = lo + [ ( x - arr[lo] ) * ( hi - lo ) / ( arr[hi] - arr[lo] ) ]
-where,
-arr[] : Array where elements need to be searched
-x  : Element to be searched
-lo : Starting index in arr[]
-hi : Ending index in arr[]
-`,
-        timeComplexity: 'O(log(log(n))) to O(n)'
-    },
-    {
-        text: 'Exponential Search',
-        description: `The idea is to start with subarray size 1, compare its last element with x, then try size 2, then 4 and so on until last element of a subarray is not greater. Once we find an index i (after repeated doubling of i), we know that the element must be present between i/2 and i because we could not find a greater value in previous iteration.`,
-        timeComplexity: 'O(log(n))'
-    },
-    {
-        text: 'Fibonacci Search',
-        description: `Let the element to find be x. The idea is to first find the smallest Fibonacci number that is greater than or equal to the length of given array. Let the found Fibonacci number be fib (m’th Fibonacci number). We use (m-2)’th Fibonacci number as the index (If it is a valid index). Let (m-2)’th Fibonacci Number be i, we compare arr[i] with x, if x is same, we return i. Else if x is greater, we recur for subarray after i, else we recur for subarray before i.`,
-        timeComplexity: 'O(log(n))'
-    },
-];
+var arrayOfInputData = new Array();
+var arrayOfSearchAlgos = new Array();
+var arrayOfDescriptions = new Array();
 var multipleValuesAvailable = ['Linear Search', 'Jump Search'];
 var isPaused = true;
 var footerDiv;
@@ -223,6 +132,11 @@ class TextNInput {
 }
 
 //-----------------------------------------------------------------------------Setup and Draw--------------------------------------------------------------------------
+
+
+function preload(){
+    loadJSON('data.json', setData);
+}
 
 function setup() {
     //create the canvas of the size of browser window + some margins
@@ -897,6 +811,15 @@ function createFooter() {
     footerDiv.child(createSpan('').style('margin-left', '50px'));
     footerDiv.child(createA('https://www.geeksforgeeks.org/searching-algorithms/', 'More info at GeeksforGeeks', '_blank'));
     footerDiv.style('text-align', 'center');
+}
+
+function setData(json) {
+    for (let desc of json.descriptions) {
+        arrayOfDescriptions.push(desc);
+        arrayOfSearchAlgos.push(desc.text);
+    }
+    for (let obj of json.inputs)
+        arrayOfInputData.push(obj);
 }
 
 function windowResized() {
